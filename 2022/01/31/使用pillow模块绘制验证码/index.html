@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>beyond的blog</title>
-  <meta name="keywords" content="">
-  <meta name="description" content="beyond的blog">
+  <title>使用pillow模块绘制验证码 | beyond的blog</title>
+  <meta name="keywords" content=" 模块 ">
+  <meta name="description" content="使用pillow模块绘制验证码 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -56,7 +56,7 @@
 
 
 <body>
-<aside class="nav mobile">
+<aside class="nav">
     <div class="nav-left">
         <a href="/"
    class="avatar_target">
@@ -244,12 +244,58 @@
         </div>
     </div>
 </aside>
-<div id="post" class="index">
+<div id="post">
     <div class="pjax">
-        <article class="index">
-            <div class="toc-ref">
+        <article id="post-使用pillow模块绘制验证码" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BB%E9%A1%B5"><span class="toc-text">主页</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%9A%E5%AE%A2%E5%B9%B3%E5%8F%B0"><span class="toc-text">博客平台</span></a></li></ol></li></ol>
+        <h1 class="article-title">使用pillow模块绘制验证码</h1>
+    
+    <div class="article-meta">
+        
+        
+        
+        <span class="book">
+            <i class="iconfont icon-category"></i>
+            
+            
+            <a  data-rel="后端">后端</a>
+            
+        </span>
+        
+        
+        <span class="tag">
+            <i class="iconfont icon-tag"></i>
+            
+            <a class="color3">模块</a>
+            
+        </span>
+        
+    </div>
+    <div class="article-meta">
+        
+            发布时间 : <time class="date" title='最后更新: 2022-01-31 09:52:20'>2022-01-31 09:44</time>
+        
+    </div>
+    <div class="article-meta">
+        
+        
+        <span id="busuanzi_container_page_pv">
+            阅读 :<span id="busuanzi_value_page_pv">
+                <span class="count-comment">
+                    <span class="spinner">
+                      <div class="cube1"></div>
+                      <div class="cube2"></div>
+                    </span>
+                </span>
+            </span>
+        </span>
+        
+        
+    </div>
+    
+    <div class="toc-ref">
+    
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E5%AF%BC%E5%85%A5"><span class="toc-text">安装和导入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-text">实例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%88%E6%9E%9C%E9%A2%84%E8%A7%88"><span class="toc-text">效果预览</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -262,17 +308,112 @@
     }
 </style>
 </div>
-            <h1 id="主页"><a href="#主页" class="headerlink" title="主页"></a>主页</h1><h2 id="博客平台"><a href="#博客平台" class="headerlink" title="博客平台"></a>博客平台</h2><p>本博客通过 <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> 生成，作者yelog的主题 <a target="_blank" rel="noopener" href="https://github.com/yelog/hexo-theme-3-hexo">3-hexo</a> 已经在github上开源</p>
-<p>主要功能：</p>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="安装和导入"><a href="#安装和导入" class="headerlink" title="安装和导入"></a>安装和导入</h2><p>安装pillow模块：<code>pip install pillow</code>：</p>
+<p>导入pillow：<code>from PIL import xxx</code></p>
 <ul>
-<li>搜索支持文章标题、标签(#标签)、作者(@作者)</li>
-<li>pad/手机等移动端适配</li>
-<li>页面全局快捷键 <a target="_blank" rel="noopener" href='http://yelog.org/2017/03/24/3-hexo-shortcuts/'>3-hexo快捷键说明</a></li>
+<li>简单了解pillow</li>
 </ul>
+<pre><code class="python">from PIL import Image, ImageDraw, ImageFont, ImageFilter
+# 画板
+img = Image.new(mode=&#39;RGB&#39;, size=(120, 30), color=(188, 188, 188))
+# 画笔
+draw = ImageDraw.Draw(img, mode=&#39;RGB&#39;)
+# 使用自定义字体
+font_size = 28
+font = ImageFont.truetype(&#39;app01/static/font/Keyboard.ttf&#39;, font_size)
 
-        </article>
-        
-        
+# 绘制文本内容，list内为绘制坐标[x, y]
+draw.text([0,0], &#39;hello,world!&#39;, fill=&#39;red&#39;)
+# 绘制像素点，list中为像素点坐标
+draw.point([100, 10], fill=&#39;black&#39;)
+# 绘制圆弧，tuple中为四角的坐标，start=0，end=360，表示开始和结束的角度
+draw.arc((0, 0, 30, 20), 0, 360, fill=&quot;green&quot;)
+# 绘制直线tuple中为端点坐标，(x1, y1, x1, y2)
+draw.line((0, 0, 120, 30), fill=&#39;blue&#39;)
+</code></pre>
+<p> <img src="https://gitee.com/beyond_24/pic_md/raw/master/image-20220124192319756.png"></p>
+<h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><pre><code class="python">import random
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+
+
+def check_code(width=120, height=30, char_length=4, font_file=&#39;app01/static/font/Keyboard.ttf&#39;, font_size=28):
+    code = []
+    img = Image.new(mode=&#39;RGB&#39;, size=(width, height), color=(255, 255, 255))
+    draw = ImageDraw.Draw(img, mode=&#39;RGB&#39;)
+
+    def rndChar():
+        &quot;&quot;&quot;
+        生成随机字母
+        :return:
+        &quot;&quot;&quot;
+        # return str(random.randint(0, 9))
+        # return chr(random.randint(65, 90))
+        # return chr(random.randint(65, 122))
+
+        # 由ascii码随机生成大小写字母
+        ascii_list = list(range(65, 91)) + list(range(97, 123))
+        letter_list = list(map(chr, ascii_list))
+        return random.choice(letter_list)
+
+    def rndColor():
+        &quot;&quot;&quot;
+        生成随机颜色
+        :return:
+        &quot;&quot;&quot;
+        return (random.randint(0, 255), random.randint(10, 255), random.randint(64, 255))
+
+    # 写文字
+    font = ImageFont.truetype(font_file, font_size)
+    for i in range(char_length):
+        char = rndChar()
+        code.append(char)
+        h = random.randint(-3, 0)
+        draw.text([i * width / char_length, h], char, font=font, fill=rndColor())
+
+    # 写干扰点
+    for i in range(40):
+        draw.point([random.randint(0, width), random.randint(0, height)], fill=rndColor())
+
+    # 写干扰圆弧
+    for i in range(30):
+        x = random.randint(0, width)
+        y = random.randint(0, height)
+        draw.arc((x, y, x + 5, y + 5), 0, 90, fill=rndColor())
+
+    # 画干扰线
+    for i in range(5):
+        x1 = random.randint(0, width)
+        y1 = random.randint(0, height)
+        x2 = random.randint(0, width)
+        y2 = random.randint(0, height)
+
+        draw.line((x1, y1, x2, y2), fill=rndColor())
+    
+    # 加上钝角滤镜
+    img = img.filter(ImageFilter.EDGE_ENHANCE_MORE)
+    return img, &#39;&#39;.join(code)
+</code></pre>
+<h2 id="效果预览"><a href="#效果预览" class="headerlink" title="效果预览"></a>效果预览</h2><p>   <img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-01-24%20%E4%B8%8B%E5%8D%887.33.03.png" alt="截屏2022-01-24 下午7.33.03"></p>
+
+      
+       <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
+    </div>
+</article>
+
+
+
+
+
+
+
+    
+
+
+
+
     </div>
     <div class="copyright">
         <p class="footer-entry">
@@ -281,11 +422,11 @@
 <p class="footer-entry">Built with <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/yelog/hexo-theme-3-hexo" target="_blank">3-hexo</a> theme</p>
 
     </div>
-</div>
-<div class="full-toc">
-    <button class="full" data-title="切换全屏 快捷键 s"><span class="min "></span></button>
+    <div class="full-toc">
+        <button class="full" data-title="切换全屏 快捷键 s"><span class="min "></span></button>
 <a class="" id="rocket" ></a>
 
+    </div>
 </div>
 
 </body>
