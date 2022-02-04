@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>使用pillow模块绘制验证码 | beyond的blog</title>
-  <meta name="keywords" content=" 模块 ">
-  <meta name="description" content="使用pillow模块绘制验证码 | beyond的blog">
+  <title>ORM之多对多实例 | beyond的blog</title>
+  <meta name="keywords" content=" django , 数据库 ">
+  <meta name="description" content="ORM之多对多实例 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -282,34 +282,28 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="post-使用pillow模块绘制验证码" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-ORM之多对多实例" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">使用pillow模块绘制验证码</h1>
+        <h1 class="article-title">ORM之多对多实例</h1>
     
     <div class="article-meta">
         
         
         
-        <span class="book">
-            <i class="iconfont icon-category"></i>
-            
-            
-            <a  data-rel="后端">后端</a>
-            
-        </span>
-        
         
         <span class="tag">
             <i class="iconfont icon-tag"></i>
             
-            <a class="color3">模块</a>
+            <a class="color2">django</a>
+            
+            <a class="color4">数据库</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-01-31 09:52:20'>2022-01-31 09:44</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-04 15:29:56'>2022-02-04 15:28</time>
         
     </div>
     <div class="article-meta">
@@ -331,7 +325,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E5%AF%BC%E5%85%A5"><span class="toc-text">安装和导入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-text">实例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%88%E6%9E%9C%E9%A2%84%E8%A7%88"><span class="toc-text">效果预览</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#ORM%E4%B9%8B%E5%A4%9A%E5%AF%B9%E5%A4%9A%E5%AE%9E%E4%BE%8B"><span class="toc-text">ORM之多对多实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%EF%BC%9A"><span class="toc-text">补充：</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -347,92 +341,127 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="安装和导入"><a href="#安装和导入" class="headerlink" title="安装和导入"></a>安装和导入</h2><p>安装pillow模块：<code>pip install pillow</code>：</p>
-<p>导入pillow：<code>from PIL import xxx</code></p>
-<ul>
-<li>简单了解pillow</li>
-</ul>
-<pre><code class="python">from PIL import Image, ImageDraw, ImageFont, ImageFilter
-# 画板
-img = Image.new(mode=&#39;RGB&#39;, size=(120, 30), color=(188, 188, 188))
-# 画笔
-draw = ImageDraw.Draw(img, mode=&#39;RGB&#39;)
-# 使用自定义字体
-font_size = 28
-font = ImageFont.truetype(&#39;app01/static/font/Keyboard.ttf&#39;, font_size)
+        <h3 id="ORM之多对多实例"><a href="#ORM之多对多实例" class="headerlink" title="ORM之多对多实例"></a>ORM之多对多实例</h3><p>案例分析：</p>
+<p>一个用户可以选多门课程；</p>
+<p>一个课程也可以被多个用户选择</p>
+<p>model.py设计</p>
+<pre><code class="python">class UserInfo(models.Model):
+    name = models.CharField(&#39;姓名&#39; , max_length=32)
+    age = models.IntegerField(&#39;年龄&#39;)
 
-# 绘制文本内容，list内为绘制坐标[x, y]
-draw.text([0,0], &#39;hello,world!&#39;, fill=&#39;red&#39;)
-# 绘制像素点，list中为像素点坐标
-draw.point([100, 10], fill=&#39;black&#39;)
-# 绘制圆弧，tuple中为四角的坐标，start=0，end=360，表示开始和结束的角度
-draw.arc((0, 0, 30, 20), 0, 360, fill=&quot;green&quot;)
-# 绘制直线tuple中为端点坐标，(x1, y1, x1, y2)
-draw.line((0, 0, 120, 30), fill=&#39;blue&#39;)
+
+
+class Course(models.Model):
+    name = models.CharField(&#39;课程名称&#39;,max_length=32)
+    user = models.ManyToManyField(
+        to=&#39;UserInfo&#39;,
+    )
 </code></pre>
-<p> <img src="https://gitee.com/beyond_24/pic_md/raw/master/image-20220124192319756.png"></p>
-<h2 id="实例"><a href="#实例" class="headerlink" title="实例"></a>实例</h2><pre><code class="python">import random
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+<p>view.py</p>
+<pre><code class="python">def testManyToMany(request):
 
+    # 前两个用户添加体育课
+    user_list = UserInfo.objects.filter(id__in=[1,2])
+    course_obj = Course.objects.filter(name=&#39;体育&#39;).first()
+    print(course_obj)
 
-def check_code(width=120, height=30, char_length=4, font_file=&#39;app01/static/font/Keyboard.ttf&#39;, font_size=28):
-    code = []
-    img = Image.new(mode=&#39;RGB&#39;, size=(width, height), color=(255, 255, 255))
-    draw = ImageDraw.Draw(img, mode=&#39;RGB&#39;)
+    course_obj.user.add(*user_list)
 
-    def rndChar():
-        &quot;&quot;&quot;
-        生成随机字母
-        :return:
-        &quot;&quot;&quot;
-        # return str(random.randint(0, 9))
-        # return chr(random.randint(65, 90))
-        # return chr(random.randint(65, 122))
+    #查选体育课的所有用户queryset，显示用户名
+    u = course_obj.user.all().values(&#39;name&#39;)
+    print(u)
 
-        # 由ascii码随机生成大小写字母
-        ascii_list = list(range(65, 91)) + list(range(97, 123))
-        letter_list = list(map(chr, ascii_list))
-        return random.choice(letter_list)
+    #反向查询wang选的所有课程queryset，显示课程名
+    wang_obj = UserInfo.objects.filter(name=&#39;wang&#39;).first()
+    c = wang_obj.course_set.all().values(&#39;name&#39;)
+    print(c)
 
-    def rndColor():
-        &quot;&quot;&quot;
-        生成随机颜色
-        :return:
-        &quot;&quot;&quot;
-        return (random.randint(0, 255), random.randint(10, 255), random.randint(64, 255))
-
-    # 写文字
-    font = ImageFont.truetype(font_file, font_size)
-    for i in range(char_length):
-        char = rndChar()
-        code.append(char)
-        h = random.randint(-3, 0)
-        draw.text([i * width / char_length, h], char, font=font, fill=rndColor())
-
-    # 写干扰点
-    for i in range(40):
-        draw.point([random.randint(0, width), random.randint(0, height)], fill=rndColor())
-
-    # 写干扰圆弧
-    for i in range(30):
-        x = random.randint(0, width)
-        y = random.randint(0, height)
-        draw.arc((x, y, x + 5, y + 5), 0, 90, fill=rndColor())
-
-    # 画干扰线
-    for i in range(5):
-        x1 = random.randint(0, width)
-        y1 = random.randint(0, height)
-        x2 = random.randint(0, width)
-        y2 = random.randint(0, height)
-
-        draw.line((x1, y1, x2, y2), fill=rndColor())
     
-    # 加上钝角滤镜
-    img = img.filter(ImageFilter.EDGE_ENHANCE_MORE)
-    return img, &#39;&#39;.join(code)
+    return HttpResponse(&#39;成功&#39;)
 </code></pre>
-<h2 id="效果预览"><a href="#效果预览" class="headerlink" title="效果预览"></a>效果预览</h2><p>   <img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-01-24%20%E4%B8%8B%E5%8D%887.33.03.png" alt="截屏2022-01-24 下午7.33.03"></p>
+<p>控制台输出</p>
+<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-02-03%20%E4%B8%8B%E5%8D%8812.43.34.png" alt="截屏2022-02-03 下午12.43.34"></p>
+<ul>
+<li><p>添加</p>
+<ul>
+<li>除了连接两表的第三张表，其余添加操作与单表插入一样</li>
+<li>第三张表添加：<ul>
+<li>(写有连接字段的)对象.表名.add()</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>正向查询</p>
+<ul>
+<li>从写有连接的表查询另一表达的操作</li>
+<li>使用对象+表名</li>
+</ul>
+</li>
+<li><p>反向查询</p>
+<ul>
+<li>从未设连接的表查</li>
+<li>使用对象+(连接表名)__set</li>
+</ul>
+</li>
+</ul>
+<h3 id="补充："><a href="#补充：" class="headerlink" title="补充："></a>补充：</h3><p>之前我们每次查询都需要去走路由，在视图函数里面去写对应的代码</p>
+<pre><code class="python">import os
+
+if __name__ == &#39;__main__&#39;:
+    # 加载Django项目的配置信息
+    os.environ.setdefault(&quot;DJANGO_SETTINGS_MODULE&quot;, &quot;Django_test.settings&quot;)
+    # 导入Django，并启动Django项目
+    import django
+
+    django.setup()
+
+    from app01.models import *
+    
+    ## 这里写你的查询语句
+        # 正向查询
+    course_obj  = Course.objects.get(name=&#39;体育&#39;)
+    # 等同于
+    # course_obj  = Course.objects.filter(name=&#39;体育&#39;).first()
+    print(f&#39;选修体育课的人数是:&#123;course_obj.user.count()&#125;&#39;)
+
+    # 反向查询
+    user_obj = UserInfo.objects.get(name=&#39;wang&#39;)
+    print(user_obj.course_set.values(&#39;name&#39;))
+</code></pre>
+<blockquote>
+<p>输出结果：</p>
+<p>选修体育课的人数是:2<br>&lt;QuerySet [{‘name’: ‘语文’}, {‘name’: ‘体育’}]&gt;</p>
+</blockquote>
+<p>基于双下划线进行链接查询和基于对象连接查询</p>
+<ul>
+<li>基于<strong>双下划线</strong>的方法是可以在过滤和取值时直接进行连表操作</li>
+</ul>
+<pre><code class="Python">   # 查询选修了体育课的用户信息queryset
+    user_list = UserInfo.objects.filter(course__name=&#39;体育&#39;)
+    print(user_list.values(&#39;name&#39;))
+    # 查询用户名为wang选修的课程queryset
+    course_list = Course.objects.filter(user__name=&#39;wang&#39;)
+    print(course_list.values(&#39;name&#39;))
+</code></pre>
+<blockquote>
+<p>输出结果：</p>
+<p>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘gp’}]&gt;<br>&lt;QuerySet [{‘name’: ‘体育’}, {‘name’: ‘语文’}]&gt;</p>
+</blockquote>
+<ul>
+<li>使用<strong>对象查询</strong>实现相同的效果</li>
+</ul>
+<pre><code class="Python">user_obj2 = UserInfo.objects.get(name=&#39;wang&#39;)
+user_list2 = user_obj2.course_set.all().values(&#39;name&#39;)
+print(user_list2)
+
+course_obj2 = Course.objects.get(name=&#39;体育&#39;)
+course_list2 = course_obj2.user.all().values(&#39;name&#39;)
+print(course_list2)
+</code></pre>
+<blockquote>
+<p>输出结果：</p>
+<p>&lt;QuerySet [{‘name’: ‘语文’}, {‘name’: ‘体育’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘gp’}]&gt;</p>
+</blockquote>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
