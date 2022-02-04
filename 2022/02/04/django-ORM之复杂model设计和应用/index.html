@@ -305,7 +305,7 @@
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-04 18:14:33'>2022-02-04 18:08</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-04 20:37:53'>2022-02-04 18:08</time>
         
     </div>
     <div class="article-meta">
@@ -414,6 +414,48 @@ class StudentInfo(models.Model):
     email = models.CharField(max_length=32, verbose_name=&#39;学生邮箱&#39;)
     create_time = models.DateTimeField(verbose_name=&#39;学生报名时间&#39;, auto_now=True)
 </code></pre>
+<p>使用faker模块生成一些脏数据或者手动添加</p>
+<pre><code class="python">from faker import Faker
+
+
+faker = Faker(&#39;zh_CN&#39;)
+student_list = []
+student_info_list = []
+for i in range(10):
+    student_list.append(Student(name=faker.name(), age=random.randint(14, 27), gender=random.choice(&#39;男女&#39;), addr=faker.address()))
+
+    student_info_list.append(StudentInfo(position=&#39;学生&#39;, like=&#39;学习&#39;, blood=&#39;O&#39;, email=faker.email(), ))
+    
+Student.objects.bulk_create(student_list)
+StudentInfo.objects.bulk_create(student_info_list)
+</code></pre>
+<p>完成如下操作</p>
+<pre><code class="python"># 查询wang的邮箱
+# 正向
+print(Student.objects.get(name=&#39;wang&#39;).student_info.email)
+# 反向
+print(StudentInfo.objects.get(student__name=&#39;wang&#39;).email)
+# 查询每个班级的班级名称
+print(Classes.objects.all().values(&#39;title&#39;))
+
+# 查询三年一班的所有学生
+print(Student.objects.filter(classes__title=&#39;三年一班&#39;).values(&#39;name&#39;))
+# 查询新校区的所有学生
+print(Classes.objects.filter(school__title=&#39;新校区&#39;).values(&#39;student__name&#39;))
+# 或者
+print(Student.objects.filter(classes__school__title=&#39;新校区&#39;).values(&#39;name&#39;))
+# 查询旧校区职位是班长的学生
+print(Student.objects.filter(student_info__position=&#39;班长&#39;, classes__school__title=&#39;旧校区&#39;).values(&#39;name&#39;))
+
+# 查询选了数学这门课程的学生
+print(Student.objects.filter(course__title=&#39;数学&#39;).values(&#39;name&#39;))
+# 为还没有职位的同学分配一个职位（学生）
+StudentInfo.objects.filter(position__isnull=True).update(position=&#39;学生&#39;)
+</code></pre>
+<blockquote>
+<p>输出结果：</p>
+<p><a href="mailto:&#49;&#x31;&#x31;&#x40;&#x71;&#x71;&#46;&#x63;&#111;&#109;">&#49;&#x31;&#x31;&#x40;&#x71;&#x71;&#46;&#x63;&#111;&#109;</a><br><a href="mailto:&#x31;&#x31;&#49;&#x40;&#113;&#113;&#46;&#99;&#x6f;&#x6d;">&#x31;&#x31;&#49;&#x40;&#113;&#113;&#46;&#99;&#x6f;&#x6d;</a><br>&lt;QuerySet [{‘title’: ‘三年一班’}, {‘title’: ‘三年二班’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}, {‘name’: ‘王建华’}]&gt;<br>&lt;QuerySet [{‘student__name’: ‘左淑华’}, {‘student__name’: ‘徐淑珍’}, {‘student__name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘左淑华’}, {‘name’: ‘徐淑珍’}, {‘name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}]&gt;</p>
+</blockquote>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
