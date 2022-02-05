@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>django ORM之复杂model设计和应用 | beyond的blog</title>
-  <meta name="keywords" content=" django , 数据库 , ORM ">
-  <meta name="description" content="django ORM之复杂model设计和应用 | beyond的blog">
+  <title>django 中cookies和session的使用 | beyond的blog</title>
+  <meta name="keywords" content=" cookies , session ">
+  <meta name="description" content="django 中cookies和session的使用 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -306,9 +306,9 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="post-django-ORM之复杂model设计和应用" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-django-中cookies和session的使用" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">django ORM之复杂model设计和应用</h1>
+        <h1 class="article-title">django 中cookies和session的使用</h1>
     
     <div class="article-meta">
         
@@ -318,18 +318,16 @@
         <span class="tag">
             <i class="iconfont icon-tag"></i>
             
-            <a class="color2">django</a>
+            <a class="color3">cookies</a>
             
-            <a class="color4">数据库</a>
-            
-            <a class="color4">ORM</a>
+            <a class="color3">session</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-04 20:37:53'>2022-02-04 18:08</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-05 14:21:46'>2022-02-05 11:36</time>
         
     </div>
     <div class="article-meta">
@@ -351,7 +349,7 @@
     
     <div class="toc-ref">
     
-        
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#cookies"><span class="toc-text">cookies</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#django%E6%93%8D%E4%BD%9Ccookie"><span class="toc-text">django操作cookie</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%BB%E5%8F%96cookie"><span class="toc-text">读取cookie</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8cookie%E7%9A%84%E5%BC%8A%E7%AB%AF"><span class="toc-text">使用cookie的弊端</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#session"><span class="toc-text">session</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8E%A5%E4%B8%8B%E6%9D%A5%E5%AE%8C%E6%88%90%E4%B8%80%E4%B8%AAsession%E7%99%BB%E5%BD%95%E8%AE%A4%E8%AF%81%E7%9A%84%E5%AE%9E%E4%BE%8B"><span class="toc-text">接下来完成一个session登录认证的实例</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -367,119 +365,117 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>现给出如下表结构对应关系，完成对应操作</p>
-<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/20210928232049.png" alt="img"></p>
-<p>model.py</p>
-<pre><code class="python">class School(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=16, verbose_name=&#39;校区名称&#39;)
+        <h3 id="cookies"><a href="#cookies" class="headerlink" title="cookies"></a>cookies</h3><p>服务端可以在返回响应的时候 做操作 在浏览器上写入键值对（Cookie）</p>
+<p>浏览器发送请求的时候会自动携带该网站保存在我浏览器的键值对（Cookie）</p>
+<p><strong>cookie</strong>是存在客户端的</p>
+<h4 id="django操作cookie"><a href="#django操作cookie" class="headerlink" title="django操作cookie"></a>django操作cookie</h4><p>只有响应对象才能设置cookie</p>
+<p>也就是我们的响应三剑客</p>
+<pre><code class="python">HttpResonse` `render` `redirect
+# 响应对象
+rep = HttpResponse(...)
+rep = render(request, ...)
+rep = redirect(...)
 
-
-class Teacher(models.Model):
-    nid = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=8, verbose_name=&#39;教师姓名&#39;)
-    age = models.IntegerField(verbose_name=&#39;教师年龄&#39;)
-    level = models.CharField(max_length=8, verbose_name=&#39;教师等级&#39;, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Classes(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(verbose_name=&#39;班级名称&#39;, max_length=12)
-    teacher = models.ManyToManyField(
-        to=&#39;Teacher&#39;
-    )
-    school = models.ForeignKey(
-        to=&#39;School&#39;,  # 班级关联的校区
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-
-
-class Course(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=8, verbose_name=&#39;课程名称&#39;)
-
-
-class Student(models.Model):
-    nid = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=8, verbose_name=&#39;学生姓名&#39;)
-    age = models.IntegerField(verbose_name=&#39;学生年龄&#39;)
-    gender = models.CharField(max_length=1, verbose_name=&#39;学生性别&#39;, default=&#39;男&#39;)
-    addr = models.CharField(max_length=32, verbose_name=&#39;学生地址&#39;, null=True, blank=True)
-    student_info = models.OneToOneField(
-        to=&#39;StudentInfo&#39;,
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    classes = models.ForeignKey(
-        to=&#39;Classes&#39;,
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    course = models.ManyToManyField(
-        to=&#39;Course&#39;  # 课程
-    )
-
-    def __str__(self):
-        return self.name + str(self.nid)
-
-
-class StudentInfo(models.Model):
-    nid = models.AutoField(primary_key=True)
-    position = models.CharField(max_length=8, verbose_name=&#39;担任职位&#39;, null=True)
-    like = models.CharField(max_length=8, verbose_name=&#39;学生爱好&#39;)
-    blood = models.CharField(max_length=8, verbose_name=&#39;学生血型&#39;)
-    email = models.CharField(max_length=32, verbose_name=&#39;学生邮箱&#39;)
-    create_time = models.DateTimeField(verbose_name=&#39;学生报名时间&#39;, auto_now=True)
+# 设置 Cookie
+rep.set_cookie(key, value, ...)
 </code></pre>
-<p>使用faker模块生成一些脏数据或者手动添加</p>
-<pre><code class="python">from faker import Faker
+<p>views.py</p>
+<pre><code class="python">def login(request):
 
-
-faker = Faker(&#39;zh_CN&#39;)
-student_list = []
-student_info_list = []
-for i in range(10):
-    student_list.append(Student(name=faker.name(), age=random.randint(14, 27), gender=random.choice(&#39;男女&#39;), addr=faker.address()))
-
-    student_info_list.append(StudentInfo(position=&#39;学生&#39;, like=&#39;学习&#39;, blood=&#39;O&#39;, email=faker.email(), ))
-    
-Student.objects.bulk_create(student_list)
-StudentInfo.objects.bulk_create(student_info_list)
+    rep = HttpResponse(&#39;成功&#39;)
+    # 为cookie设置一个小时的过期时间
+    rep.set_cookie(&#39;now_time_GMT&#39;, datetime.datetime.now(), expires=60*60)
+    return rep
 </code></pre>
-<p>完成如下操作</p>
-<pre><code class="python"># 查询wang的邮箱
-# 正向
-print(Student.objects.get(name=&#39;wang&#39;).student_info.email)
-# 反向
-print(StudentInfo.objects.get(student__name=&#39;wang&#39;).email)
-# 查询每个班级的班级名称
-print(Classes.objects.all().values(&#39;title&#39;))
-
-# 查询三年一班的所有学生
-print(Student.objects.filter(classes__title=&#39;三年一班&#39;).values(&#39;name&#39;))
-# 查询新校区的所有学生
-print(Classes.objects.filter(school__title=&#39;新校区&#39;).values(&#39;student__name&#39;))
-# 或者
-print(Student.objects.filter(classes__school__title=&#39;新校区&#39;).values(&#39;name&#39;))
-# 查询旧校区职位是班长的学生
-print(Student.objects.filter(student_info__position=&#39;班长&#39;, classes__school__title=&#39;旧校区&#39;).values(&#39;name&#39;))
-
-# 查询选了数学这门课程的学生
-print(Student.objects.filter(course__title=&#39;数学&#39;).values(&#39;name&#39;))
-# 为还没有职位的同学分配一个职位（学生）
-StudentInfo.objects.filter(position__isnull=True).update(position=&#39;学生&#39;)
+<p>设置expires或max_age以秒为单位的推迟</p>
+<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-02-05%20%E4%B8%8B%E5%8D%881.57.46.png" alt="浏览器cookie"></p>
+<p>注意，设置中文的时候，需要进行json序列化，否则会写入不成功</p>
+<pre><code class="python">username = form.cleaned_data.get(&#39;name&#39;)
+rep = HttpResponse(&#39;登录成功&#39;)
+rep.set_cookie(&#39;is_login&#39;, True)
+rep.set_cookie(&#39;username&#39;, json.dumps(username))
 </code></pre>
-<blockquote>
-<p>输出结果：</p>
-<p><a href="mailto:&#x31;&#49;&#x31;&#64;&#x71;&#113;&#46;&#x63;&#111;&#x6d;">&#x31;&#49;&#x31;&#64;&#x71;&#113;&#46;&#x63;&#111;&#x6d;</a><br><a href="mailto:&#49;&#x31;&#49;&#64;&#113;&#113;&#46;&#99;&#111;&#109;">&#49;&#x31;&#49;&#64;&#113;&#113;&#46;&#99;&#111;&#109;</a><br>&lt;QuerySet [{‘title’: ‘三年一班’}, {‘title’: ‘三年二班’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}, {‘name’: ‘王建华’}]&gt;<br>&lt;QuerySet [{‘student__name’: ‘左淑华’}, {‘student__name’: ‘徐淑珍’}, {‘student__name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘左淑华’}, {‘name’: ‘徐淑珍’}, {‘name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}]&gt;</p>
-</blockquote>
+<h4 id="读取cookie"><a href="#读取cookie" class="headerlink" title="读取cookie"></a>读取cookie</h4><p>设置的cookie都会随浏览器携带过来，在请求对象中去拿就好</p>
+<pre><code class="python">def r_01(request):
+    c_v = request.COOKIES.get(&#39;is_login&#39;)
+    print(c_v)
+    return HttpResponse(&#39;ok&#39;)
+</code></pre>
+<p>中文同样需要进行反序列化</p>
+<pre><code class="python">def index_cookie(request):
+    is_login = request.COOKIES.get(&#39;is_login&#39;)
+    if is_login:
+        return HttpResponse(f&#39;登录成功， 用户名：&#123;json.loads(request.COOKIES.get(&quot;username&quot;))&#125;&#39;)
+    return HttpResponse(&#39;没有登录&#39;)
+</code></pre>
+<h4 id="使用cookie的弊端"><a href="#使用cookie的弊端" class="headerlink" title="使用cookie的弊端"></a>使用cookie的弊端</h4><p>由于Cookie会把信息保存到本地，因此信息的安全性可能受到威胁</p>
+<p>Session的出现很好地解决的这个问题，Session与Cookie类似，但它们最明显的区别是，Session会将信息保存服务器端，客户端需要一个session_id，它一段随机的字符串，类似身份证的功能，从服务器端中根据这个凭证来获取信息</p>
+<h3 id="session"><a href="#session" class="headerlink" title="session"></a>session</h3><ul>
+<li><p>session的优点</p>
+<ul>
+<li>session是可以直接设置中文的，不需要进行序列化和反序列化操作了</li>
+<li>信息存放在服务端因此更为安全</li>
+<li>使用简单，和字典赋值一样给session赋值即可</li>
+</ul>
+</li>
+<li><p>session的逻辑</p>
+<p>  只需要一条session赋值语句<code>request.session[&#39;login&#39;] = True</code></p>
+<p>  django会自动帮我们完成如下操作</p>
+<ul>
+<li><p>生成随机字符串 242342jbnghg23g535ui2asd</p>
+</li>
+<li><p>将这个这个随机字符串当做cookie发送给客户端</p>
+<ul>
+<li>相当于<code>rsponse.set_cookie(&quot;sessionid&quot;, 242342jbnghg23g535ui2asd)</code></li>
+</ul>
+</li>
+<li><p>在数据库django-session表中创建一条记录：（实际上进行了编码）</p>
+<table>
+<thead>
+<tr>
+<th>session-key</th>
+<th>session-data</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>242342jbnghg23g535ui2asd</td>
+<td>{“login”: True, …}</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>读取session时会</p>
+<ul>
+<li>从cookie中取出随机字符串 242342jbnghg23g535ui2asd</li>
+<li>在django-session表中过滤字段，找到它的记录</li>
+<li>在记录中进行取值</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="接下来完成一个session登录认证的实例"><a href="#接下来完成一个session登录认证的实例" class="headerlink" title="接下来完成一个session登录认证的实例"></a>接下来完成一个session登录认证的实例</h3><pre><code class="python">def login(request):
+        &quot;&quot;&quot;
+            省略登录验证部分
+        &quot;&quot;&quot;
+        
+        # 用户名和密码正确，写入session
+        request.session[&#39;info&#39;] = &#123;
+            &#39;id&#39;: user_obj.id,
+            &#39;username&#39;: user_obj.username,
+        &#125;
+
+        # 设置用户的session时间（单位秒）
+        request.session.set_expiry(60 * 60 * 24 * 7)
+
+        return redirect(&#39;/index/&#39;)
+    # 数据校验失败重新输入
+    return render(request, &#39;login.html&#39;, &#123;&#39;form&#39;: form&#125;)
+
+def logout(request):
+    # 清除用户session并重定向
+    request.session.clear()
+    return redirect(&#39;/login/&#39;)
+</code></pre>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
