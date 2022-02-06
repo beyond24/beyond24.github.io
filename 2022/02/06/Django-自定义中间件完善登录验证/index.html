@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>about | beyond的blog</title>
-  <meta name="keywords" content="">
-  <meta name="description" content="about | beyond的blog">
+  <title>Django 自定义中间件完善登录验证 | beyond的blog</title>
+  <meta name="keywords" content=" django , 中间件 ">
+  <meta name="description" content="Django 自定义中间件完善登录验证 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -318,19 +318,28 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="page-" class="article article-type-page" itemscope itemprop="blogPost">
+        <article id="post-Django-自定义中间件完善登录验证" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">about</h1>
+        <h1 class="article-title">Django 自定义中间件完善登录验证</h1>
     
     <div class="article-meta">
         
         
         
+        
+        <span class="tag">
+            <i class="iconfont icon-tag"></i>
+            
+            <a class="color2">django</a>
+            
+            <a class="color4">中间件</a>
+            
+        </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-01-30 22:16:02'>2022-01-30 22:14</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-06 11:41:38'>2022-02-06 11:40</time>
         
     </div>
     <div class="article-meta">
@@ -352,7 +361,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B3%E4%BA%8E"><span class="toc-text">关于</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Django-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%AE%8C%E5%96%84%E7%99%BB%E5%BD%95%E9%AA%8C%E8%AF%81"><span class="toc-text">Django 自定义中间件完善登录验证</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -368,7 +377,60 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="关于"><a href="#关于" class="headerlink" title="关于"></a>关于</h1>
+        <h3 id="Django-自定义中间件完善登录验证"><a href="#Django-自定义中间件完善登录验证" class="headerlink" title="Django 自定义中间件完善登录验证"></a>Django 自定义中间件完善登录验证</h3><p>在之前的session登录验证的基础上，自定义中间件，使得用户非登录状态下访问页面的过滤。</p>
+<p><img src="http://python.fengfengzhidao.icu/img/20211013143152.png" alt="django 中间件示意图"></p>
+<p>在APP下初始化一个包，如下：</p>
+<p> <img src="/Users/beyond/Library/Application%2520Support/typora-user-images/image-20220206113456768.png" alt="目录"></p>
+<p>setting.py中注册</p>
+<blockquote>
+<pre><code class="python">MIDDLEWARE = [
+    &#39;django.middleware.security.SecurityMiddleware&#39;,
+    &#39;django.contrib.sessions.middleware.SessionMiddleware&#39;,
+    &#39;django.middleware.common.CommonMiddleware&#39;,
+    &#39;django.middleware.csrf.CsrfViewMiddleware&#39;,
+    &#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;,
+    &#39;django.contrib.messages.middleware.MessageMiddleware&#39;,
+    &#39;django.middleware.clickjacking.XFrameOptionsMiddleware&#39;,
+    &#39;app01.middleWare.auth.M1&#39;,
+]
+</code></pre>
+</blockquote>
+<p>auth.py</p>
+<pre><code class="python"># 自定义django中间件
+
+from django.utils.deprecation import MiddlewareMixin
+from django.shortcuts import redirect
+import re
+
+WHITE_LIST = [
+    &#39;/login/&#39;,
+    &#39;/image/code/&#39;,
+    &#39;/index/.*$&#39;    # 也可以进行正则匹配
+]
+
+class M1(MiddlewareMixin):
+    &quot;&quot;&quot; 中间件1 &quot;&quot;&quot;
+
+    def process_request(self, request):
+        # 1.排除那些不需要登录就能访问的页面
+        # request.path_info获取当前用户请求的URL
+        path = request.path_info
+        for i in WHITE_LIST:
+            res = re.match(i, path)
+            if res:
+                return
+        # 2.登录验证，若存在session，说明登录过，继续往下一个中间件走
+        info_dict = request.session.get(&#39;info&#39;)
+        if info_dict:
+            return
+        # 3.若没有登录，重定向
+        return redirect(&#39;/login/&#39;)
+
+    def process_response(self, request, response):
+
+        return response
+</code></pre>
+
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
     </div>

@@ -112,7 +112,7 @@
     <li>
         <div class="all active" data-rel="全部文章">全部文章
             
-                <small>(7)</small>
+                <small>(8)</small>
             
         </div>
     </li>
@@ -151,7 +151,7 @@
         
     </div>
 </div>
-<input type="hidden" id="yelog_site_posts_number" value="7">
+<input type="hidden" id="yelog_site_posts_number" value="8">
 
 <div style="display: none">
     <span id="busuanzi_value_site_uv"></span>
@@ -210,6 +210,10 @@
             </li>
         
             <li class="article-tag-list-item">
+                <i class="iconfont icon-tag"></i><a>中间件</a>
+            </li>
+        
+            <li class="article-tag-list-item">
                 <i class="iconfont icon-tag"></i><a>cookies</a>
             </li>
         
@@ -231,6 +235,14 @@
 
     
     <nav id="title-list-nav">
+        
+        <a  class="全部文章 "
+           href="/2022/02/06/Django-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%B8%AD%E9%97%B4%E4%BB%B6%E5%AE%8C%E5%96%84%E7%99%BB%E5%BD%95%E9%AA%8C%E8%AF%81/"
+           data-tag="django,中间件"
+           data-author="" >
+            <span class="post-title" title="Django 自定义中间件完善登录验证">Django 自定义中间件完善登录验证</span>
+            <span class="post-date" title="2022-02-06 11:40:17">2022/02/06</span>
+        </a>
         
         <a  class="全部文章 "
            href="/2022/02/05/django-%E4%B8%ADcookies%E5%92%8Csession%E7%9A%84%E4%BD%BF%E7%94%A8/"
@@ -478,7 +490,7 @@ StudentInfo.objects.filter(position__isnull=True).update(position=&#39;学生&#3
 </code></pre>
 <blockquote>
 <p>输出结果：</p>
-<p><a href="mailto:&#x31;&#49;&#x31;&#64;&#x71;&#113;&#46;&#x63;&#111;&#x6d;">&#x31;&#49;&#x31;&#64;&#x71;&#113;&#46;&#x63;&#111;&#x6d;</a><br><a href="mailto:&#49;&#x31;&#49;&#64;&#113;&#113;&#46;&#99;&#111;&#109;">&#49;&#x31;&#49;&#64;&#113;&#113;&#46;&#99;&#111;&#109;</a><br>&lt;QuerySet [{‘title’: ‘三年一班’}, {‘title’: ‘三年二班’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}, {‘name’: ‘王建华’}]&gt;<br>&lt;QuerySet [{‘student__name’: ‘左淑华’}, {‘student__name’: ‘徐淑珍’}, {‘student__name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘左淑华’}, {‘name’: ‘徐淑珍’}, {‘name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}]&gt;</p>
+<p><a href="mailto:&#49;&#x31;&#x31;&#64;&#113;&#x71;&#x2e;&#99;&#111;&#x6d;">&#49;&#x31;&#x31;&#64;&#113;&#x71;&#x2e;&#99;&#111;&#x6d;</a><br><a href="mailto:&#49;&#x31;&#x31;&#x40;&#113;&#113;&#46;&#99;&#111;&#x6d;">&#49;&#x31;&#x31;&#x40;&#113;&#113;&#46;&#99;&#111;&#x6d;</a><br>&lt;QuerySet [{‘title’: ‘三年一班’}, {‘title’: ‘三年二班’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}, {‘name’: ‘王建华’}]&gt;<br>&lt;QuerySet [{‘student__name’: ‘左淑华’}, {‘student__name’: ‘徐淑珍’}, {‘student__name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘左淑华’}, {‘name’: ‘徐淑珍’}, {‘name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}]&gt;</p>
 </blockquote>
 
       
