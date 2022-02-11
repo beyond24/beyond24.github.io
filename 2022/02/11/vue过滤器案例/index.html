@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>ORM之多对多实例 | beyond的blog</title>
-  <meta name="keywords" content=" django , 数据库 ">
-  <meta name="description" content="ORM之多对多实例 | beyond的blog">
+  <title>vue过滤器案例 | beyond的blog</title>
+  <meta name="keywords" content=" vue , 过滤器 ">
+  <meta name="description" content="vue过滤器案例 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -348,28 +348,36 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="post-ORM之多对多实例" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-vue过滤器案例" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">ORM之多对多实例</h1>
+        <h1 class="article-title">vue过滤器案例</h1>
     
     <div class="article-meta">
         
         
         
+        <span class="book">
+            <i class="iconfont icon-category"></i>
+            
+            
+            <a  data-rel="前端">前端</a>
+            
+        </span>
+        
         
         <span class="tag">
             <i class="iconfont icon-tag"></i>
             
-            <a class="color2">django</a>
+            <a class="color4">vue</a>
             
-            <a class="color4">数据库</a>
+            <a class="color4">过滤器</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-04 15:29:56'>2022-02-04 15:28</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-11 15:18:41'>2022-02-11 15:14</time>
         
     </div>
     <div class="article-meta">
@@ -391,7 +399,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#ORM%E4%B9%8B%E5%A4%9A%E5%AF%B9%E5%A4%9A%E5%AE%9E%E4%BE%8B"><span class="toc-text">ORM之多对多实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%EF%BC%9A"><span class="toc-text">补充：</span></a></li></ol>
+        
     
 <style>
     .left-col .switch-btn,
@@ -407,127 +415,135 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h3 id="ORM之多对多实例"><a href="#ORM之多对多实例" class="headerlink" title="ORM之多对多实例"></a>ORM之多对多实例</h3><p>案例分析：</p>
-<p>一个用户可以选多门课程；</p>
-<p>一个课程也可以被多个用户选择</p>
-<p>model.py设计</p>
-<pre><code class="python">class UserInfo(models.Model):
-    name = models.CharField(&#39;姓名&#39; , max_length=32)
-    age = models.IntegerField(&#39;年龄&#39;)
+        <p>实现如下功能：</p>
+<p>根据传入date_string类型的时间数据计算出，距离当前时间的差值</p>
+<p>表达方式为：</p>
+<ul>
+<li>xx秒前</li>
+<li>xx天前</li>
+<li>…</li>
+</ul>
+<pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;title&gt;Title&lt;/title&gt;
+    &lt;script src=&quot;vue.js&quot;&gt;&lt;/script&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;app&quot;&gt;
+    &lt;div&gt;
+        &#123;&#123; now|get_date &#125;&#125;
+    &lt;/div&gt;
+
+    &lt;ul&gt;
+        &lt;li v-for=&quot;item in data_list&quot; :key=&quot;item.id&quot;&gt;
+            id: &#123;&#123; item.id &#125;&#125; 时间：&#123;&#123; item.date|get_date &#125;&#125;
+        &lt;/li&gt;
+
+    &lt;/ul&gt;
+        &lt;ul&gt;
+        &lt;li v-for=&quot;item in data_list&quot; :key=&quot;item.id&quot;&gt;
+            id: &#123;&#123; item.id &#125;&#125; 时间：&#123;&#123; item.date &#125;&#125; 发表于:&#123;&#123; item.date|time_to_filter &#125;&#125;
+        &lt;/li&gt;
+
+    &lt;/ul&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+    function getDateDiff(datestamp) &#123;
+        var publishTime = datestamp / 1000,
+            d_seconds,
+            d_minutes,
+            d_hours,
+            d_days,
+            timeNow = parseInt(new Date().getTime() / 1000),
+            d,
+            date = new Date(publishTime * 1000),
+            Y = date.getFullYear(),
+            M = date.getMonth(),
+            D = date.getDate(),
+            H = date.getHours(),
+            m = date.getMinutes(),
+            s = date.getSeconds();
+        // 小于10的在前面补0
+        if (M &lt; 10) &#123;
+            M = &#39;0&#39; + M;
+        &#125;
+        if (D &lt; 10) &#123;
+            D = &#39;0&#39; + D;
+        &#125;
+        if (H &lt; 10) &#123;
+            H = &#39;0&#39; + H;
+        &#125;
+        if (m &lt; 10) &#123;
+            m = &#39;0&#39; + m;
+        &#125;
+        if (s &lt; 10) &#123;
+            s = &#39;0&#39; + s;
+        &#125;
+        d = timeNow - publishTime;
+        d_days = parseInt(d / 86400);
+        d_hours = parseInt(d / 3600);
+        d_minutes = parseInt(d / 60);
+        d_seconds = parseInt(d);
+        if (d_days &gt; 0 &amp;&amp; d_days &lt; 3) &#123;
+            return d_days + &quot;天前&quot;;
+        &#125; else if (d_days &lt;= 0 &amp;&amp; d_minutes &gt; 0) &#123;
+            return d_hours + &#39;小时前&#39;;
+        &#125; else if (d_hours &lt;= 0 &amp;&amp; d_hours &gt; 0) &#123;
+            return d_minutes + &#39;分钟前&#39;;
+        &#125; else if (d_seconds &lt; 60) &#123;
+            if (d_seconds &lt;= 0) &#123;
+                return &#39;刚刚发表&#39;;
+            &#125; else &#123;
+                return d_seconds + &#39;秒前&#39;;
+            &#125;
+        &#125; else if (d_days &gt;= 3 &amp;&amp; d_days &lt; 30) &#123;
+            return M + &#39;-&#39; + D + &#39; &#39; + H + &#39;:&#39; + m;
+        &#125;else if (d_days&gt;=0) &#123;
+            return Y + &#39;-&#39; + M + &#39;-&#39; + D + &#39; &#39; + H + &#39;:&#39; + m;
+        &#125;
+
+    &#125;
 
 
 
-class Course(models.Model):
-    name = models.CharField(&#39;课程名称&#39;,max_length=32)
-    user = models.ManyToManyField(
-        to=&#39;UserInfo&#39;,
-    )
+
+    new Vue(&#123;
+        el: &#39;#app&#39;, //vue挂载的位置，除了body
+        data: &#123;
+            now: &#39;2022-2-8 22:21:11&#39;,
+            data_list: [
+                &#123;id: 1, date: &#39;2022-2-8 22:21:11&#39;&#125;,
+                &#123;id: 2, date: &#39;2022-2-11 9:21:11&#39;&#125;,
+                &#123;id: 3, date: &#39;2022-2-9 22:21:11&#39;&#125;,
+                &#123;id: 4, date: &#39;2022-2-10 22:21:11&#39;&#125;,
+                &#123;id: 5, date: &#39;2022-2-11 11:09:11&#39;&#125;,
+            ]
+        &#125;,
+        filters: &#123;
+            get_date: function (date_str) &#123;
+                let date = new Date(date_str)
+                return `$&#123;date.getFullYear()&#125;-$&#123;date.getMonth()&#125;-$&#123;date.getDate()&#125;`
+            &#125;,
+            time_to_filter: function (date_str) &#123;
+                // 字符串-&gt;对象-&gt;时间戳
+                let datestamp = new Date(date_str).getTime()
+                // 和当前时间做差，求出相差多少天，多少秒
+                // 字符串-&gt;时间戳
+                return getDateDiff(datestamp)
+
+            &#125;
+        &#125;
+
+    &#125;)
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
 </code></pre>
-<p>view.py</p>
-<pre><code class="python">def testManyToMany(request):
-
-    # 前两个用户添加体育课
-    user_list = UserInfo.objects.filter(id__in=[1,2])
-    course_obj = Course.objects.filter(name=&#39;体育&#39;).first()
-    print(course_obj)
-
-    course_obj.user.add(*user_list)
-
-    #查选体育课的所有用户queryset，显示用户名
-    u = course_obj.user.all().values(&#39;name&#39;)
-    print(u)
-
-    #反向查询wang选的所有课程queryset，显示课程名
-    wang_obj = UserInfo.objects.filter(name=&#39;wang&#39;).first()
-    c = wang_obj.course_set.all().values(&#39;name&#39;)
-    print(c)
-
-    
-    return HttpResponse(&#39;成功&#39;)
-</code></pre>
-<p>控制台输出</p>
-<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-02-03%20%E4%B8%8B%E5%8D%8812.43.34.png" alt="截屏2022-02-03 下午12.43.34"></p>
-<ul>
-<li><p>添加</p>
-<ul>
-<li>除了连接两表的第三张表，其余添加操作与单表插入一样</li>
-<li>第三张表添加：<ul>
-<li>(写有连接字段的)对象.表名.add()</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><p>正向查询</p>
-<ul>
-<li>从写有连接的表查询另一表达的操作</li>
-<li>使用对象+表名</li>
-</ul>
-</li>
-<li><p>反向查询</p>
-<ul>
-<li>从未设连接的表查</li>
-<li>使用对象+(连接表名)__set</li>
-</ul>
-</li>
-</ul>
-<h3 id="补充："><a href="#补充：" class="headerlink" title="补充："></a>补充：</h3><p>之前我们每次查询都需要去走路由，在视图函数里面去写对应的代码</p>
-<pre><code class="python">import os
-
-if __name__ == &#39;__main__&#39;:
-    # 加载Django项目的配置信息
-    os.environ.setdefault(&quot;DJANGO_SETTINGS_MODULE&quot;, &quot;Django_test.settings&quot;)
-    # 导入Django，并启动Django项目
-    import django
-
-    django.setup()
-
-    from app01.models import *
-    
-    ## 这里写你的查询语句
-        # 正向查询
-    course_obj  = Course.objects.get(name=&#39;体育&#39;)
-    # 等同于
-    # course_obj  = Course.objects.filter(name=&#39;体育&#39;).first()
-    print(f&#39;选修体育课的人数是:&#123;course_obj.user.count()&#125;&#39;)
-
-    # 反向查询
-    user_obj = UserInfo.objects.get(name=&#39;wang&#39;)
-    print(user_obj.course_set.values(&#39;name&#39;))
-</code></pre>
-<blockquote>
-<p>输出结果：</p>
-<p>选修体育课的人数是:2<br>&lt;QuerySet [{‘name’: ‘语文’}, {‘name’: ‘体育’}]&gt;</p>
-</blockquote>
-<p>基于双下划线进行链接查询和基于对象连接查询</p>
-<ul>
-<li>基于<strong>双下划线</strong>的方法是可以在过滤和取值时直接进行连表操作</li>
-</ul>
-<pre><code class="Python">   # 查询选修了体育课的用户信息queryset
-    user_list = UserInfo.objects.filter(course__name=&#39;体育&#39;)
-    print(user_list.values(&#39;name&#39;))
-    # 查询用户名为wang选修的课程queryset
-    course_list = Course.objects.filter(user__name=&#39;wang&#39;)
-    print(course_list.values(&#39;name&#39;))
-</code></pre>
-<blockquote>
-<p>输出结果：</p>
-<p>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘gp’}]&gt;<br>&lt;QuerySet [{‘name’: ‘体育’}, {‘name’: ‘语文’}]&gt;</p>
-</blockquote>
-<ul>
-<li>使用<strong>对象查询</strong>实现相同的效果</li>
-</ul>
-<pre><code class="Python">user_obj2 = UserInfo.objects.get(name=&#39;wang&#39;)
-user_list2 = user_obj2.course_set.all().values(&#39;name&#39;)
-print(user_list2)
-
-course_obj2 = Course.objects.get(name=&#39;体育&#39;)
-course_list2 = course_obj2.user.all().values(&#39;name&#39;)
-print(course_list2)
-</code></pre>
-<blockquote>
-<p>输出结果：</p>
-<p>&lt;QuerySet [{‘name’: ‘语文’}, {‘name’: ‘体育’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘gp’}]&gt;</p>
-</blockquote>
+<p>效果如下：</p>
+<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/%E6%88%AA%E5%B1%8F2022-02-11%20%E4%B8%8B%E5%8D%883.17.46.png" alt="效果演示"></p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
