@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>django ORM之F查询和Q查询 | beyond的blog</title>
-  <meta name="keywords" content=" django , 数据库 , ORM ">
-  <meta name="description" content="django ORM之F查询和Q查询 | beyond的blog">
+  <title>django信号机制实现关联表的创建 | beyond的blog</title>
+  <meta name="keywords" content=" django ">
+  <meta name="description" content="django信号机制实现关联表的创建 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -356,9 +356,9 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="post-django-ORM之F查询和Q查询" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-django信号机制实现关联表的创建" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">django ORM之F查询和Q查询</h1>
+        <h1 class="article-title">django信号机制实现关联表的创建</h1>
     
     <div class="article-meta">
         
@@ -370,16 +370,12 @@
             
             <a class="color2">django</a>
             
-            <a class="color4">数据库</a>
-            
-            <a class="color4">ORM</a>
-            
         </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-05 14:08:26'>2022-02-05 10:50</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-21 16:10:41'>2022-02-21 16:09</time>
         
     </div>
     <div class="article-meta">
@@ -401,7 +397,7 @@
     
     <div class="toc-ref">
     
-        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#F%E6%9F%A5%E8%AF%A2"><span class="toc-text">F查询</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q%E6%9F%A5%E8%AF%A2"><span class="toc-text">Q查询</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#django%E4%BF%A1%E5%8F%B7%E6%9C%BA%E5%88%B6%E5%AE%9E%E7%8E%B0%E5%85%B3%E8%81%94%E8%A1%A8%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-text">django信号机制实现关联表的创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%EF%BC%9A"><span class="toc-text">注意：</span></a></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -417,58 +413,60 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h3 id="F查询"><a href="#F查询" class="headerlink" title="F查询"></a>F查询</h3><p>我们构造的过滤器都只是将字段值与某个常量做比较。如果我们要对两个字段的值做比较，那该怎么做呢？</p>
-<p>Django 提供 F() 来做这样的比较。F() 的实例可以在查询中引用字段，来比较同一个 model 实例中两个不同字段的值。</p>
-<pre><code class="python">from django.db.models import F, Q
+        <h3 id="django信号机制实现关联表的创建"><a href="#django信号机制实现关联表的创建" class="headerlink" title="django信号机制实现关联表的创建"></a>django信号机制实现关联表的创建</h3><p>我们时常用一对一<strong>models.OneToOneField</strong>扩展一个表，比如扩展User表，新建一个Profile的模型</p>
+<pre><code class="Python">class Profile(models.Model):
+    # 与 User 模型构成一对一的关系
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name=&#39;profile&#39;)
+    phone = models.CharField(max_length=20, blank=True)
+    # 头像
+    avatar = models.ImageField(upload_to=&#39;avatar/%Y%m%d/&#39;, blank=True)
+    # 个人简介
+    bio = models.TextField(max_length=500, blank=True)
 
-# 查询评论量比点赞量高的课程
-print(Course.objects.filter(comment_count__gt=F(&#39;digg_count&#39;)).values(&#39;title&#39;,&#39;look_count&#39;))
+    def __str__(self):
+        return &#39;user &#123;&#125;&#39;.format(self.user.username)
+</code></pre>
+<p>但通常需要创建User后手动再创建Profile</p>
+<p>这里使用django中的信号机制更为便捷的实现</p>
+<pre><code class="Python"># 引入内置信号
+from django.db.models.signals import post_save
+# 引入信号接收器的装饰器
+from django.dispatch import receiver
 
-# 每次运行都给某课程的浏览量加 1
-# 常规方法
-course_obj = Course.objects.get(title=&#39;django入门&#39;)
-course_obj.look_count += 1
-course_obj.save()
-print(course_obj.look_count)
 
-# 使用F查询的方法
-Course.objects.filter(title=&#39;django入门&#39;).update(look_count=F(&#39;look_count&#39;) + 1)
-print(Course.objects.get(title=&#39;django入门&#39;).look_count)
+# 用户扩展信息
+class Profile(models.Model):
+    ...
+
+
+# 信号接收函数，每当新建 User 实例时自动调用
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+
+# 信号接收函数，每当更新 User 实例时自动调用
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
 </code></pre>
 <blockquote>
-<p>运行结果：</p>
-<p>&lt;QuerySet [{‘title’: ‘django入门’, ‘look_count’: 119}]&gt;<br>120<br>121</p>
+<p>装饰器<code>receiver</code>就起到接收器的作用。每当<code>User</code>有更新时，就发送一个信号启动<code>post_save</code>相关的函数。<br>通过信号的传递，实现了每当<code>User</code>创建/更新时，<code>Profile</code>也会自动的创建/更新。</p>
 </blockquote>
-<h3 id="Q查询"><a href="#Q查询" class="headerlink" title="Q查询"></a>Q查询</h3><p><code>filter()</code> 等方法中的关键字参数查询都是一起进行“AND” 的。 如果你需要执行更复杂的查询（例如<code>OR</code>语句），你可以使用<code>Q对象</code>。</p>
-<table>
-<thead>
-<tr>
-<th>逻辑运算符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>|</td>
-<td>或</td>
-</tr>
-<tr>
-<td>&amp;</td>
-<td>与</td>
-</tr>
-<tr>
-<td>~</td>
-<td>非</td>
-</tr>
-</tbody></table>
-<pre><code class="python"># 查询学生地址是北京市开头的或者学生姓名是姓李
-print(Student.objects.filter(Q(name__startswith=&#39;李&#39;) | Q(addr__startswith=&#39;北京市&#39;)).values(&#39;name&#39;, &#39;addr&#39;))
-
-# 需要注意一点的是，如果既有Q查询，也有普通查询，一定要将Q放到关键字参数的前面
-print(Student.objects.filter(Q(gender=&#39;女&#39;), age__gt=25).values(&#39;name&#39;, &#39;age&#39;))
-</code></pre>
+<h3 id="注意："><a href="#注意：" class="headerlink" title="注意："></a>注意：</h3><p>但是这样做会产生一个bug</p>
 <blockquote>
-<p>运行结果：</p>
-<p>&lt;QuerySet [{‘name’: ‘李洋’, ‘addr’: ‘河南省梧州县金平周街b座 186569’}, {‘name’: ‘余琳’, ‘addr’: ‘北京市嘉禾县普陀段路d座 623387’}, {‘name’: ‘齐坤’, ‘addr’: ‘北京市东莞县高坪徐路d座 160719’}…]&gt;<br>&lt;QuerySet [{‘name’: ‘余琳’, ‘age’: 27}, {‘name’: ‘余玉梅’, ‘age’: 26}, {‘name’: ‘马柳’, ‘age’: 27}, {‘name’: ‘严云’, ‘age’: 26}, {‘name’: ‘冷丹丹’, ‘age’: 27}, {‘name’: ‘马婷婷’, ‘age’: 27}, {‘name’: ‘王俊’, ‘age’: 27}]&gt;</p>
+<p>在后台中创建<code>User</code>时如果填写了<code>Profile</code>任何内容，则系统报错且保存不成功；其他情况下均正常。</p>
+<p><strong>BUG产生原因：</strong>在后台中创建并保存<code>User</code>时调用了信号接收函数，创建了<code>Profile</code>表；但如果此时管理员填写了内联的<code>Profile</code>表，会导致此表也会被创建并保存。最终结果就是同时创建了两个具有相同<code>User</code>的<code>Profile</code>表，违背了”一对一“外键的原则。</p>
+<p><strong>解决：</strong></p>
+<ul>
+<li><p>修改model，把两个信号接收函数去除；修改view，使得<code>Profile</code>表根据是否已经存在而动态的创建、获取：</p>
+</li>
+<li><p>取消<code>Profile</code>在后台的内联，避免创建<code>User</code>的同时创建此表。</p>
+</li>
+<li><p>覆写<code>User</code>表的<code>save()</code>方法，跳过后台的自动保存。（不推荐）</p>
+</li>
+</ul>
 </blockquote>
 
       
