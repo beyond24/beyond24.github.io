@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>django ORM之复杂model设计和应用 | beyond的blog</title>
-  <meta name="keywords" content=" django , 数据库 , ORM ">
-  <meta name="description" content="django ORM之复杂model设计和应用 | beyond的blog">
+  <title>django-mptt实现多级评论 | beyond的blog</title>
+  <meta name="keywords" content=" model ">
+  <meta name="description" content="django-mptt实现多级评论 | beyond的blog">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="description" content="关于">
 <meta property="og:type" content="website">
@@ -382,30 +382,34 @@
 </aside>
 <div id="post">
     <div class="pjax">
-        <article id="post-django-ORM之复杂model设计和应用" class="article article-type-post" itemscope itemprop="blogPost">
+        <article id="post-django-mptt实现多级评论" class="article article-type-post" itemscope itemprop="blogPost">
     
-        <h1 class="article-title">django ORM之复杂model设计和应用</h1>
+        <h1 class="article-title">django-mptt实现多级评论</h1>
     
     <div class="article-meta">
         
         
         
+        <span class="book">
+            <i class="iconfont icon-category"></i>
+            
+            
+            <a  data-rel="django">django</a>
+            
+        </span>
+        
         
         <span class="tag">
             <i class="iconfont icon-tag"></i>
             
-            <a class="color2">django</a>
-            
-            <a class="color4">数据库</a>
-            
-            <a class="color4">ORM</a>
+            <a class="color1">model</a>
             
         </span>
         
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-24 10:01:16'>2022-02-04 18:08</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-27 21:34:36'>2022-02-27 21:33</time>
         
     </div>
     <div class="article-meta">
@@ -427,7 +431,7 @@
     
     <div class="toc-ref">
     
-        
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#django-mptt%E5%AE%9E%E7%8E%B0%E5%A4%9A%E7%BA%A7%E8%AF%84%E8%AE%BA"><span class="toc-text">django-mptt实现多级评论</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E4%BA%86%E8%A7%A3django-mptt"><span class="toc-text">简单了解django-mptt</span></a></li></ol></li></ol>
     
 <style>
     .left-col .switch-btn,
@@ -443,119 +447,82 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>现给出如下表结构对应关系，完成对应操作</p>
-<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/20210928232049.png" alt="img"></p>
-<p>model.py</p>
-<pre><code class="python">class School(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=16, verbose_name=&#39;校区名称&#39;)
+        <h1 id="django-mptt实现多级评论"><a href="#django-mptt实现多级评论" class="headerlink" title="django-mptt实现多级评论"></a>django-mptt实现多级评论</h1><p>django-mptt是django的一个第三方app，可以方便的创建树形model</p>
+<p>现用django-mptt实现一个多级评论</p>
+<ul>
+<li>评论最多为二级</li>
+<li>超过二级的评论转化为二级，但增加回复对象</li>
+</ul>
+<h2 id="简单了解django-mptt"><a href="#简单了解django-mptt" class="headerlink" title="简单了解django-mptt"></a>简单了解django-mptt</h2><p>django-mptt内部使用邻接表实现，遍历时使用改进的前序遍历。先不做深究，当做简单的黑盒子使用。</p>
+<p>一些参数字段：</p>
+<ul>
+<li><p>parent_attr 默认为“parent”。将模型关联回自身的字段的名称，这样每个实例都可以是另一个实例的子实例。用户需要在模型上定义此字段如上示例的parent字段</p>
+</li>
+<li><p>left_attr 默认名称”lft”。表示树型模型字段左边的节点数字，字段类型为PositiveIntegerField</p>
+</li>
+<li><p>right_attr 默认名称”rght”。表示树型模型字段右边的节点数字，字段类型为PositiveIntegerField</p>
+</li>
+<li><p>tree_id_attr 默认名称”tree_id”。表示包含每个节点的树ID的字段的名称</p>
+</li>
+<li><p>level_attr 默认名称”level”。表示每个节点所在的树形结构的层级</p>
+</li>
+<li><p>order_insertion_by 默认值[ ]。当插入新的树节点或重新创建现有节点时，应定义排序的字段名列表，首先是最重要的排序字段名</p>
+</li>
+</ul>
+<p>使用时记得导入model字段不再继承原有的model</p>
+<pre><code class="python"># model.py
+from mptt.models import MPTTModel, TreeForeignKey
+# 博文的评论
+class Comment(MPTTModel):
 
+    ...
 
-class Teacher(models.Model):
-    nid = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=8, verbose_name=&#39;教师姓名&#39;)
-    age = models.IntegerField(verbose_name=&#39;教师年龄&#39;)
-    level = models.CharField(max_length=8, verbose_name=&#39;教师等级&#39;, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Classes(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(verbose_name=&#39;班级名称&#39;, max_length=12)
-    teacher = models.ManyToManyField(
-        to=&#39;Teacher&#39;
-    )
-    school = models.ForeignKey(
-        to=&#39;School&#39;,  # 班级关联的校区
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
+    # mptt树形结构
+    parent = TreeForeignKey(
+        &#39;self&#39;,
+        on_delete= models.CASCADE,
         null=True,
+        blank=True,
+        related_name=&#39;children&#39;,
     )
-
-
-class Course(models.Model):
-    nid = models.AutoField(primary_key=True)
-    title = models.CharField(max_length=8, verbose_name=&#39;课程名称&#39;)
-
-
-class Student(models.Model):
-    nid = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=8, verbose_name=&#39;学生姓名&#39;)
-    age = models.IntegerField(verbose_name=&#39;学生年龄&#39;)
-    gender = models.CharField(max_length=1, verbose_name=&#39;学生性别&#39;, default=&#39;男&#39;)
-    addr = models.CharField(max_length=32, verbose_name=&#39;学生地址&#39;, null=True, blank=True)
-    student_info = models.OneToOneField(
-        to=&#39;StudentInfo&#39;,
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    classes = models.ForeignKey(
-        to=&#39;Classes&#39;,
-        to_field=&#39;nid&#39;,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    course = models.ManyToManyField(
-        to=&#39;Course&#39;  # 课程
-    )
-
-    def __str__(self):
-        return self.name + str(self.nid)
-
-
-class StudentInfo(models.Model):
-    nid = models.AutoField(primary_key=True)
-    position = models.CharField(max_length=8, verbose_name=&#39;担任职位&#39;, null=True)
-    like = models.CharField(max_length=8, verbose_name=&#39;学生爱好&#39;)
-    blood = models.CharField(max_length=8, verbose_name=&#39;学生血型&#39;)
-    email = models.CharField(max_length=32, verbose_name=&#39;学生邮箱&#39;)
-    create_time = models.DateTimeField(verbose_name=&#39;学生报名时间&#39;, auto_now=True)
 </code></pre>
-<p>使用faker模块生成一些脏数据或者手动添加</p>
-<pre><code class="python">from faker import Faker
-
-
-faker = Faker(&#39;zh_CN&#39;)
-student_list = []
-student_info_list = []
-for i in range(10):
-    student_list.append(Student(name=faker.name(), age=random.randint(14, 27), gender=random.choice(&#39;男女&#39;), addr=faker.address()))
-
-    student_info_list.append(StudentInfo(position=&#39;学生&#39;, like=&#39;学习&#39;, blood=&#39;O&#39;, email=faker.email(), ))
-    
-Student.objects.bulk_create(student_list)
-StudentInfo.objects.bulk_create(student_info_list)
-</code></pre>
-<p>完成如下操作</p>
-<pre><code class="python"># 查询wang的邮箱
-# 正向
-print(Student.objects.get(name=&#39;wang&#39;).student_info.email)
-# 反向
-print(StudentInfo.objects.get(student__name=&#39;wang&#39;).email)
-# 查询每个班级的班级名称
-print(Classes.objects.all().values(&#39;title&#39;))
-
-# 查询三年一班的所有学生
-print(Student.objects.filter(classes__title=&#39;三年一班&#39;).values(&#39;name&#39;))
-# 查询新校区的所有学生
-print(Classes.objects.filter(school__title=&#39;新校区&#39;).values(&#39;student__name&#39;))
-# 或者
-print(Student.objects.filter(classes__school__title=&#39;新校区&#39;).values(&#39;name&#39;))
-# 查询旧校区职位是班长的学生
-print(Student.objects.filter(student_info__position=&#39;班长&#39;, classes__school__title=&#39;旧校区&#39;).values(&#39;name&#39;))
-
-# 查询选了数学这门课程的学生
-print(Student.objects.filter(course__title=&#39;数学&#39;).values(&#39;name&#39;))
-# 为还没有职位的同学分配一个职位（学生）
-StudentInfo.objects.filter(position__isnull=True).update(position=&#39;学生&#39;)
-</code></pre>
+<p>作图演示：</p>
+<p>添加多级评论的结构</p>
+<p><img src="/Users/beyond/Library/Application%2520Support/typora-user-images/image-20220227211515028.png" alt="image-20220227211515028"></p>
 <blockquote>
-<p>输出结果：</p>
-<p><a href="mailto:&#49;&#49;&#49;&#64;&#x71;&#x71;&#46;&#x63;&#111;&#x6d;">&#49;&#49;&#49;&#64;&#x71;&#x71;&#46;&#x63;&#111;&#x6d;</a><br><a href="mailto:&#49;&#49;&#x31;&#64;&#x71;&#113;&#x2e;&#x63;&#x6f;&#109;">&#49;&#49;&#x31;&#64;&#x71;&#113;&#x2e;&#x63;&#x6f;&#109;</a><br>&lt;QuerySet [{‘title’: ‘三年一班’}, {‘title’: ‘三年二班’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}, {‘name’: ‘王建华’}]&gt;<br>&lt;QuerySet [{‘student__name’: ‘左淑华’}, {‘student__name’: ‘徐淑珍’}, {‘student__name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘左淑华’}, {‘name’: ‘徐淑珍’}, {‘name’: ‘薛刚’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}]&gt;<br>&lt;QuerySet [{‘name’: ‘wang’}, {‘name’: ‘宋雷’}]&gt;</p>
+<p>但是这样会出现一个问题，那就是如果评论一直回复下去，树形结构会一直延伸下去，既不利于网页显示，又加重数据存储的负担；如何解决，即开头提到的：将三级及三级以上的评论通通转化为二级评论，再额外增加一个属性reply_to记录二级评论回复给谁</p>
 </blockquote>
+<pre><code class="python"># model.py
+class Comment(MPTTModel):
+    ...
+
+    # 新增，记录二级评论回复给谁, str
+    reply_to = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name=&#39;replyers&#39;
+    )
+    # 替换 Meta 为 MPTTMeta
+    # class Meta:
+    #     ordering = (&#39;created&#39;,)
+    class MPTTMeta:
+        order_insertion_by = [&#39;-created&#39;]
+</code></pre>
+<pre><code class="python"># view.py的部分代码，处理逻辑
+
+if parent_comment_id:
+    parent_comment = Comment.objects.get(id=parent_comment_id)
+    # 若回复层级超过二级，则转换为二级
+    new_comment.parent_id = parent_comment.get_root().id
+    # 被回复人
+    new_comment.reply_to = parent_comment.user
+    new_comment.save()
+    return JsonResponse(&#123;&quot;code&quot;: &quot;200 OK&quot;, &quot;new_comment_id&quot;: new_comment.id&#125;)
+</code></pre>
+<p>于是评论的属性模型变成如下：</p>
+<p><img src="/Users/beyond/Library/Application%2520Support/typora-user-images/image-20220227213012455.png" alt="image-20220227213012455"></p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
