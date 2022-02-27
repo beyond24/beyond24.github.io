@@ -409,7 +409,7 @@
     </div>
     <div class="article-meta">
         
-            发布时间 : <time class="date" title='最后更新: 2022-02-27 21:34:36'>2022-02-27 21:33</time>
+            发布时间 : <time class="date" title='最后更新: 2022-02-27 21:39:15'>2022-02-27 21:33</time>
         
     </div>
     <div class="article-meta">
@@ -488,7 +488,7 @@ class Comment(MPTTModel):
 </code></pre>
 <p>作图演示：</p>
 <p>添加多级评论的结构</p>
-<p><img src="/Users/beyond/Library/Application%2520Support/typora-user-images/image-20220227211515028.png" alt="image-20220227211515028"></p>
+<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/image-20220227211515028.png" alt="image-20220227211515028"></p>
 <blockquote>
 <p>但是这样会出现一个问题，那就是如果评论一直回复下去，树形结构会一直延伸下去，既不利于网页显示，又加重数据存储的负担；如何解决，即开头提到的：将三级及三级以上的评论通通转化为二级评论，再额外增加一个属性reply_to记录二级评论回复给谁</p>
 </blockquote>
@@ -522,7 +522,7 @@ if parent_comment_id:
     return JsonResponse(&#123;&quot;code&quot;: &quot;200 OK&quot;, &quot;new_comment_id&quot;: new_comment.id&#125;)
 </code></pre>
 <p>于是评论的属性模型变成如下：</p>
-<p><img src="/Users/beyond/Library/Application%2520Support/typora-user-images/image-20220227213012455.png" alt="image-20220227213012455"></p>
+<p><img src="https://gitee.com/beyond_24/pic_md/raw/master/image-20220227213012455.png" alt="image-20220227213012455"></p>
 
       
        <hr><span style="font-style: italic;color: gray;"> 转载请注明来源，欢迎对文章中的引用来源进行考证，欢迎指出任何有错误或不够清晰的表达。可以在下面评论区评论。 </span>
