@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="Hexo Theme Keep">
+    <meta name="author" content="Walter">
+    
+    <title>
+        
+            Python进阶之pillow模块绘制验证码 |
+        
+        The Secret Life of Walter
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-logo.png">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/fontawesome.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/regular.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/solid.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/brands.min.css">
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {}
+    KEEP.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"}
+    KEEP.theme_config = {"toc":{"enable":true,"number":true,"expand_all":true,"init_open":true},"style":{"primary_color":"#666666","logo":null,"favicon":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-logo.png","avatar":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-avatar.jpeg","font_size":null,"font_family":null,"hover":{"shadow":true,"scale":false},"first_screen":{"enable":true,"header_transparent":true,"background_img":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blogBg.jpg","description":"To see the world, things dangerous to come to ,To see behind walls ,To draw closer ,To find each other and to feel .That is the purpose of LIFE .","font_color":"#FFFFFF","hitokoto":false},"scroll":{"progress_bar":true,"percent":false}},"local_search":{"enable":true,"preload":true},"code_copy":{},"code_block":{"tools":{"enable":true,"style":"default"},"highlight_theme":"default"},"side_tools":{},"pjax":{"enable":true},"lazyload":{"enable":true},"comment":{"enable":true,"use":"waline","valine":{"appid":null,"appkey":null,"server_urls":null,"placeholder":null},"gitalk":{"github_id":"beyond24","github_admins":null,"repository":"blog_comments","client_id":"46286efbc3c47d9cd09a","client_secret":"531394d4ce5656f12e988b22a4096006fb9b816d","proxy":null},"twikoo":{"env_id":null,"region":null,"version":"1.6.8"},"waline":{"server_url":"https://blog-comments-f2bthmc6q-beyond24.vercel.app/","reaction":true,"version":2}},"post":{"author_label":{"enable":true,"auto":true,"custom_label_list":["Trainee","Engineer","Architect"]},"word_count":{"enable":true,"wordcount":true,"min2read":true},"img_align":"left","copyright_info":false},"version":"3.6.1"}
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"}
+    KEEP.language_code_block = {"copy":"复制代码","copied":"已复制","fold":"折叠代码块","folded":"已折叠"}
+    KEEP.language_copy_copyright = {"copy":"复制版权信息","copied":"已复制","title":"原文标题","author":"原文作者","link":"原文链接"}
+  </script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <i class="pjax-progress-icon fas fa-circle-notch fa-spin"></i>
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            
+<header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+               The Secret Life of Walter
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/tags"
+                            >
+                                标签
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/categories"
+                            >
+                                分类
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/about"
+                            >
+                                关于
+                            </a>
+                        </li>
+                    
+                    
+                        <li class="menu-item search search-popup-trigger">
+                            <i class="fas fa-search"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div>
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/tags">标签</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/categories">分类</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/about">关于</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="post-page-container">
+        <div class="article-content-container">
+
+            <div class="article-title">
+                <span class="title-hover-animation">Python进阶之pillow模块绘制验证码</span>
+            </div>
+
+            
+                <div class="article-header">
+                    <div class="avatar">
+                        <img src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-avatar.jpeg">
+                    </div>
+                    <div class="info">
+                        <div class="author">
+                            <span class="name">Walter</span>
+                            
+                                <span class="author-label">Lv1</span>
+                            
+                        </div>
+                        <div class="meta-info">
+                            
+<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        
+            <i class="fa-regular fa-calendar-plus"></i>&nbsp;
+        
+        <span class="pc">2023-02-17 12:54:37</span>
+        <span class="mobile">2023-02-17 12:54</span>
+    </span>
+    
+        <span class="article-update-date article-meta-item">
+        <i class="fas fa-file-pen"></i>&nbsp;
+        <span class="pc">2023-03-05 13:01:43</span>
+    </span>
+    
+    
+        <span class="article-categories article-meta-item">
+            <i class="fas fa-folder"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/categories/Python/">Python</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+    
+
+    
+    
+        <span class="article-wordcount article-meta-item">
+            <i class="fas fa-file-word"></i>&nbsp;<span>841 字</span>
+        </span>
+    
+    
+        <span class="article-min2read article-meta-item">
+            <i class="fas fa-clock"></i>&nbsp;<span>3 分钟</span>
+        </span>
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                        </div>
+                    </div>
+                </div>
+            
+
+            <div class="article-content keep-markdown-body">
+                
+
+                <h1 id="简介"><a class="markdownIt-Anchor" href="#简介"></a> 简介</h1>
+<p>PIL：Python Imaging Library，是一个强大的图像处理标准库，Pillow 是由 Python2.x 版本中PIL的基础上延伸来的更加兼容的版本。</p>
+<blockquote>
+<p>Pillow 模块主要提供了图像处理的功能，可以处理图像、做图像缩放、旋转、翻转、裁剪、调整亮度与对比度等操作，支持多种图像格式，支持图像的滤镜处理，支持高级图像处理，支持图片编码和解码，支持图像和文本的混合输出，支持多平台，可派生到多种语言。</p>
+</blockquote>
+<h1 id="安装和导入"><a class="markdownIt-Anchor" href="#安装和导入"></a> 安装和导入</h1>
+<p><strong>安装Pillow模块：</strong></p>
+<p><code>pip install pillow</code>：</p>
+<p><strong>导入Pillow：</strong></p>
+<p><code>from PIL import xxx</code></p>
+<h1 id="快速上手"><a class="markdownIt-Anchor" href="#快速上手"></a> 快速上手</h1>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image, ImageDraw, ImageFont, ImageFilter</span><br><span class="line"><span class="comment"># 画板</span></span><br><span class="line">img = Image.new(mode=<span class="string">&#x27;RGB&#x27;</span>, size=(<span class="number">120</span>, <span class="number">30</span>), color=(<span class="number">188</span>, <span class="number">188</span>, <span class="number">188</span>))</span><br><span class="line"><span class="comment"># 画笔</span></span><br><span class="line">draw = ImageDraw.Draw(img, mode=<span class="string">&#x27;RGB&#x27;</span>)</span><br><span class="line"><span class="comment"># 使用自定义字体</span></span><br><span class="line">font_size = <span class="number">28</span></span><br><span class="line">font = ImageFont.truetype(<span class="string">&#x27;app01/static/font/Keyboard.ttf&#x27;</span>, font_size)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制文本内容，list内为绘制坐标[x, y]</span></span><br><span class="line">draw.text([<span class="number">0</span>,<span class="number">0</span>], <span class="string">&#x27;hello,world!&#x27;</span>, fill=<span class="string">&#x27;red&#x27;</span>)</span><br><span class="line"><span class="comment"># 绘制像素点，list中为像素点坐标</span></span><br><span class="line">draw.point([<span class="number">100</span>, <span class="number">10</span>], fill=<span class="string">&#x27;black&#x27;</span>)</span><br><span class="line"><span class="comment"># 绘制圆弧，tuple中为边框两角的左边，也可以写成([0, 0],[30, 20])，start=0，end=360，表示开始和结束的角度</span></span><br><span class="line">draw.arc((<span class="number">0</span>, <span class="number">0</span>, <span class="number">30</span>, <span class="number">20</span>), <span class="number">0</span>, <span class="number">360</span>, fill=<span class="string">&quot;green&quot;</span>)</span><br><span class="line"><span class="comment"># 绘制直线tuple中为端点坐标，(x1, y1, x1, y2)</span></span><br><span class="line">draw.line((<span class="number">0</span>, <span class="number">0</span>, <span class="number">120</span>, <span class="number">30</span>), fill=<span class="string">&#x27;blue&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>** **<img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/image-20220124192319756.png"
+                      alt="pillow演示图" 
+                ></p>
+<h1 id="实战"><a class="markdownIt-Anchor" href="#实战"></a> 实战</h1>
+<p>日常Web 开发过程中，在注册及登录验证时，数字验证码使用场景颇多。虽然得益于 Django 强大的第三方库如：</p>
+<ul>
+<li>django-simple-captcha：支持生成简单的文字验证码和数学验证码，支持中文。</li>
+<li>django-captcha：支持生成简单的文字验证码，支持自定义字体大小、字体类型等。</li>
+<li>django-recaptcha：基于Google reCAPTCHA，支持验证码和滑动验证码，支持多种语言。</li>
+<li>django-simple-captcha-update：支持生成简单的文字验证码，支持中文，支持自定义字体大小等。</li>
+</ul>
+<p>但通过 Pillow 模块我们自己也能实现简单的数字验证码功能。</p>
+<p>演示如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image, ImageDraw, ImageFont, ImageFilter</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check_code</span>(<span class="params">width=<span class="number">120</span>, height=<span class="number">30</span>, char_length=<span class="number">4</span>, font_file=<span class="string">&#x27;app01/static/font/Keyboard.ttf&#x27;</span>, font_size=<span class="number">28</span></span>):</span></span><br><span class="line">    code = []</span><br><span class="line">    <span class="comment"># 新建画板、画笔</span></span><br><span class="line">    img = Image.new(mode=<span class="string">&#x27;RGB&#x27;</span>, size=(width, height), color=(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>))</span><br><span class="line">    draw = ImageDraw.Draw(img, mode=<span class="string">&#x27;RGB&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">rndChar</span>():</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        生成随机字母</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="comment"># 由ascii码随机生成大小写字母</span></span><br><span class="line">        ascii_list = <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="number">65</span>, <span class="number">91</span>)) + <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="number">97</span>, <span class="number">123</span>))</span><br><span class="line">        <span class="comment"># 使用map ASCII 码映射为字符格式</span></span><br><span class="line">        letter_list = <span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">chr</span>, ascii_list))</span><br><span class="line">        <span class="keyword">return</span> random.choice(letter_list)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">rndColor</span>():</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        生成随机颜色</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> (random.randint(<span class="number">0</span>, <span class="number">255</span>), random.randint(<span class="number">10</span>, <span class="number">255</span>), random.randint(<span class="number">64</span>, <span class="number">255</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写文字</span></span><br><span class="line">    font = ImageFont.truetype(font_file, font_size)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(char_length):</span><br><span class="line">        char = rndChar()</span><br><span class="line">        code.append(char)</span><br><span class="line">        h = random.randint(-<span class="number">3</span>, <span class="number">0</span>)</span><br><span class="line">        draw.text([i * width / char_length, h], char, font=font, fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写干扰点</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">40</span>):</span><br><span class="line">        draw.point([random.randint(<span class="number">0</span>, width), random.randint(<span class="number">0</span>, height)], fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写干扰圆弧</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30</span>):</span><br><span class="line">        x = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y = random.randint(<span class="number">0</span>, height)</span><br><span class="line">        draw.arc((x, y, x + <span class="number">5</span>, y + <span class="number">5</span>), <span class="number">0</span>, <span class="number">90</span>, fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 画干扰线</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        x1 = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y1 = random.randint(<span class="number">0</span>, height)</span><br><span class="line">        x2 = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y2 = random.randint(<span class="number">0</span>, height)</span><br><span class="line"></span><br><span class="line">        draw.line((x1, y1, x2, y2), fill=rndColor())</span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 加上钝角滤镜</span></span><br><span class="line">    img = img.<span class="built_in">filter</span>(ImageFilter.EDGE_ENHANCE_MORE)</span><br><span class="line">    <span class="keyword">return</span> img, <span class="string">&#x27;&#x27;</span>.join(code)</span><br></pre></td></tr></table></figure>
+<h2 id="效果预览"><a class="markdownIt-Anchor" href="#效果预览"></a> 效果预览</h2>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2022-01-24%20%E4%B8%8B%E5%8D%887.33.03.png"
+                      alt="pillow 绘制验证码" 
+                ></p>
+<p><strong>根据个人需求还可以增加随机字体大小，模糊背景等功能，更多使用方法参考</strong><a class="link"   target="_blank" rel="noopener" href="https://pillow.readthedocs.org/" >Pillow 官方文档<i class="fas fa-external-link-alt"></i></a></p>
+
+            </div>
+
+            
+
+            
+
+            
+                <div class="article-nav">
+                    
+                        <div class="article-prev">
+                            <a class="prev"
+                               rel="prev"
+                               href="/2023/09/12/%E5%A6%82%E4%BD%95%E6%8B%A5%E6%9C%89%E4%B8%80%E4%B8%AA%E5%8F%AF%E8%BF%9C%E7%A8%8B%E6%9B%B4%E6%96%B0%E7%9A%84Hexo%E5%8D%9A%E5%AE%A2?%20%20/"
+                            >
+                            <span class="left arrow-icon flex-center">
+                              <i class="fas fa-chevron-left"></i>
+                            </span>
+                                <span class="title flex-center">
+                                <span class="post-nav-title-item">如何拥有一个可远程更新的Hexo博客?  </span>
+                                <span class="post-nav-item">上一篇</span>
+                            </span>
+                            </a>
+                        </div>
+                    
+                    
+                        <div class="article-next">
+                            <a class="next"
+                               rel="next"
+                               href="/2023/02/17/Python%E8%BF%9B%E9%98%B6%E4%B9%8B%E9%97%AD%E5%8C%85%E5%92%8C%E8%A3%85%E9%A5%B0%E5%99%A8/"
+                            >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">Python进阶之闭包和装饰器</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                                <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                            </a>
+                        </div>
+                    
+                </div>
+            
+
+            
+                <div class="comment-container">
+                    
+<div class="comments-container">
+    <div id="comments-anchor"></div>
+    <div class="comment-area-title">
+        <i class="fas fa-comments"></i>&nbsp;评论
+    </div>
+    
+        
+            
+
+    <div class="waline-comment-container">
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.css"/>
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline-meta.css"/>
+        <script data-pjax src="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.js"></script>
+        <div id="waline-comment"></div>
+        <script data-pjax>
+          function loadWaline() {
+            Waline.init({
+              el: '#waline-comment',
+              serverURL: 'https://blog-comments-f2bthmc6q-beyond24.vercel.app/',
+              lang: 'zh-CN' || 'zh-CN',
+              comment: '.post-comments-count',
+              reaction: 'true' === 'true'
+            })
+          }
+
+          if ('true' === 'true') {
+            setTimeout(() => {
+              loadWaline()
+            }, 1000)
+          } else {
+            window.addEventListener('DOMContentLoaded', loadWaline)
+          }
+        </script>
+    </div>
+
+
+
+        
+    
+</div>
+
+                </div>
+            
+        </div>
+
+        
+            <div class="toc-content-container">
+                <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text"> 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%92%8C%E5%AF%BC%E5%85%A5"><span class="nav-number">2.</span> <span class="nav-text"> 安装和导入</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B"><span class="nav-number">3.</span> <span class="nav-text"> 快速上手</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E6%88%98"><span class="nav-number">4.</span> <span class="nav-text"> 实战</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E9%A2%84%E8%A7%88"><span class="nav-number">4.1.</span> <span class="nav-text"> 效果预览</span></a></li></ol></li></ol>
+    </div>
+</div>
+
+            </div>
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            
+<footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+                <span>2020</span> -
+            
+            2024
+            
+                &nbsp;<i class="fas fa-heart icon-animate"></i>
+                &nbsp;<a href="/">Walter</a>
+            
+        </div>
+        
+            <script async data-pjax
+                    src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    访问人数&nbsp;<span id="busuanzi_value_site_uv"></span>&ensp;
+                
+                
+                    总访问量&nbsp;<span id="busuanzi_value_site_pv"></span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.6.1</a>
+        </div>
+        
+        
+            <div class="deploy-info info-item">
+                
+                    本站由 <span class="tooltip" data-content="GitHub Pages"><img src="/images/deploy-provider/github.png"></span> 提供部署服务
+                
+            </div>
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item flex-center toggle-show-toc">
+                <i class="fas fa-list"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+            <li class="tools-item flex-center go-to-comments">
+                <i class="fas fa-comment"></i>
+                <span class="post-comments-count"></span>
+            </li>
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="zoom-in-image-mask">
+    <img class="zoom-in-image">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fas fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="close-popup-btn">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+</main>
+
+
+
+<script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/utils.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/main.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/header-shrink.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/back2top.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/dark-light-toggle.js"></script>
+
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/local-search.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/code-block.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/lazyload.js"></script>
+
+
+<div class="post-scripts pjax">
+    
+        <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/post-helper.js"></script>
+        
+            <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/libs/anime.min.js"></script>
+        
+        
+            <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/toc.js"></script>
+        
+    
+</div>
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/libs/pjax.min.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        window.pjax = new Pjax({
+            selectors: [
+                'head title',
+                '.page-container',
+                '.pjax'
+            ],
+            history: true,
+            debug: false,
+            cacheBust: false,
+            timeout: 0,
+            analytics: false,
+            currentUrlFullReload: false,
+            scrollRestoration: false,
+            // scrollTo: true,
+        });
+
+        document.addEventListener('pjax:send', () => {
+            KEEP.utils.pjaxProgressBarStart();
+        });
+
+        document.addEventListener('pjax:complete', () => {
+            KEEP.utils.pjaxProgressBarEnd();
+            window.pjax.executeScripts(document.querySelectorAll('script[data-pjax], .pjax script'));
+            KEEP.refresh();
+        });
+    });
+</script>
+
+
+
+</body>
+</html>
