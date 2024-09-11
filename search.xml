@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>Python进阶之pillow模块绘制验证码</title>
+    <url>/2023/02/17/Python%E8%BF%9B%E9%98%B6%E4%B9%8Bpillow%E6%A8%A1%E5%9D%97%E7%BB%98%E5%88%B6%E9%AA%8C%E8%AF%81%E7%A0%81/</url>
+    <content><![CDATA[<h1 id="简介"><a class="markdownIt-Anchor" href="#简介"></a> 简介</h1>
+<p>PIL：Python Imaging Library，是一个强大的图像处理标准库，Pillow 是由 Python2.x 版本中PIL的基础上延伸来的更加兼容的版本。</p>
+<blockquote>
+<p>Pillow 模块主要提供了图像处理的功能，可以处理图像、做图像缩放、旋转、翻转、裁剪、调整亮度与对比度等操作，支持多种图像格式，支持图像的滤镜处理，支持高级图像处理，支持图片编码和解码，支持图像和文本的混合输出，支持多平台，可派生到多种语言。</p>
+</blockquote>
+<h1 id="安装和导入"><a class="markdownIt-Anchor" href="#安装和导入"></a> 安装和导入</h1>
+<p><strong>安装Pillow模块：</strong></p>
+<p><code>pip install pillow</code>：</p>
+<p><strong>导入Pillow：</strong></p>
+<p><code>from PIL import xxx</code></p>
+<h1 id="快速上手"><a class="markdownIt-Anchor" href="#快速上手"></a> 快速上手</h1>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image, ImageDraw, ImageFont, ImageFilter</span><br><span class="line"><span class="comment"># 画板</span></span><br><span class="line">img = Image.new(mode=<span class="string">&#x27;RGB&#x27;</span>, size=(<span class="number">120</span>, <span class="number">30</span>), color=(<span class="number">188</span>, <span class="number">188</span>, <span class="number">188</span>))</span><br><span class="line"><span class="comment"># 画笔</span></span><br><span class="line">draw = ImageDraw.Draw(img, mode=<span class="string">&#x27;RGB&#x27;</span>)</span><br><span class="line"><span class="comment"># 使用自定义字体</span></span><br><span class="line">font_size = <span class="number">28</span></span><br><span class="line">font = ImageFont.truetype(<span class="string">&#x27;app01/static/font/Keyboard.ttf&#x27;</span>, font_size)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 绘制文本内容，list内为绘制坐标[x, y]</span></span><br><span class="line">draw.text([<span class="number">0</span>,<span class="number">0</span>], <span class="string">&#x27;hello,world!&#x27;</span>, fill=<span class="string">&#x27;red&#x27;</span>)</span><br><span class="line"><span class="comment"># 绘制像素点，list中为像素点坐标</span></span><br><span class="line">draw.point([<span class="number">100</span>, <span class="number">10</span>], fill=<span class="string">&#x27;black&#x27;</span>)</span><br><span class="line"><span class="comment"># 绘制圆弧，tuple中为边框两角的左边，也可以写成([0, 0],[30, 20])，start=0，end=360，表示开始和结束的角度</span></span><br><span class="line">draw.arc((<span class="number">0</span>, <span class="number">0</span>, <span class="number">30</span>, <span class="number">20</span>), <span class="number">0</span>, <span class="number">360</span>, fill=<span class="string">&quot;green&quot;</span>)</span><br><span class="line"><span class="comment"># 绘制直线tuple中为端点坐标，(x1, y1, x1, y2)</span></span><br><span class="line">draw.line((<span class="number">0</span>, <span class="number">0</span>, <span class="number">120</span>, <span class="number">30</span>), fill=<span class="string">&#x27;blue&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>** **<img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/image-20220124192319756.png"
+                      alt="pillow演示图" 
+                ></p>
+<h1 id="实战"><a class="markdownIt-Anchor" href="#实战"></a> 实战</h1>
+<p>日常Web 开发过程中，在注册及登录验证时，数字验证码使用场景颇多。虽然得益于 Django 强大的第三方库如：</p>
+<ul>
+<li>django-simple-captcha：支持生成简单的文字验证码和数学验证码，支持中文。</li>
+<li>django-captcha：支持生成简单的文字验证码，支持自定义字体大小、字体类型等。</li>
+<li>django-recaptcha：基于Google reCAPTCHA，支持验证码和滑动验证码，支持多种语言。</li>
+<li>django-simple-captcha-update：支持生成简单的文字验证码，支持中文，支持自定义字体大小等。</li>
+</ul>
+<p>但通过 Pillow 模块我们自己也能实现简单的数字验证码功能。</p>
+<p>演示如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">from</span> PIL <span class="keyword">import</span> Image, ImageDraw, ImageFont, ImageFilter</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check_code</span>(<span class="params">width=<span class="number">120</span>, height=<span class="number">30</span>, char_length=<span class="number">4</span>, font_file=<span class="string">&#x27;app01/static/font/Keyboard.ttf&#x27;</span>, font_size=<span class="number">28</span></span>):</span></span><br><span class="line">    code = []</span><br><span class="line">    <span class="comment"># 新建画板、画笔</span></span><br><span class="line">    img = Image.new(mode=<span class="string">&#x27;RGB&#x27;</span>, size=(width, height), color=(<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>))</span><br><span class="line">    draw = ImageDraw.Draw(img, mode=<span class="string">&#x27;RGB&#x27;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">rndChar</span>():</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        生成随机字母</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="comment"># 由ascii码随机生成大小写字母</span></span><br><span class="line">        ascii_list = <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="number">65</span>, <span class="number">91</span>)) + <span class="built_in">list</span>(<span class="built_in">range</span>(<span class="number">97</span>, <span class="number">123</span>))</span><br><span class="line">        <span class="comment"># 使用map ASCII 码映射为字符格式</span></span><br><span class="line">        letter_list = <span class="built_in">list</span>(<span class="built_in">map</span>(<span class="built_in">chr</span>, ascii_list))</span><br><span class="line">        <span class="keyword">return</span> random.choice(letter_list)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">rndColor</span>():</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        生成随机颜色</span></span><br><span class="line"><span class="string">        :return:</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> (random.randint(<span class="number">0</span>, <span class="number">255</span>), random.randint(<span class="number">10</span>, <span class="number">255</span>), random.randint(<span class="number">64</span>, <span class="number">255</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写文字</span></span><br><span class="line">    font = ImageFont.truetype(font_file, font_size)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(char_length):</span><br><span class="line">        char = rndChar()</span><br><span class="line">        code.append(char)</span><br><span class="line">        h = random.randint(-<span class="number">3</span>, <span class="number">0</span>)</span><br><span class="line">        draw.text([i * width / char_length, h], char, font=font, fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写干扰点</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">40</span>):</span><br><span class="line">        draw.point([random.randint(<span class="number">0</span>, width), random.randint(<span class="number">0</span>, height)], fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 写干扰圆弧</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">30</span>):</span><br><span class="line">        x = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y = random.randint(<span class="number">0</span>, height)</span><br><span class="line">        draw.arc((x, y, x + <span class="number">5</span>, y + <span class="number">5</span>), <span class="number">0</span>, <span class="number">90</span>, fill=rndColor())</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 画干扰线</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        x1 = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y1 = random.randint(<span class="number">0</span>, height)</span><br><span class="line">        x2 = random.randint(<span class="number">0</span>, width)</span><br><span class="line">        y2 = random.randint(<span class="number">0</span>, height)</span><br><span class="line"></span><br><span class="line">        draw.line((x1, y1, x2, y2), fill=rndColor())</span><br><span class="line">  </span><br><span class="line">    <span class="comment"># 加上钝角滤镜</span></span><br><span class="line">    img = img.<span class="built_in">filter</span>(ImageFilter.EDGE_ENHANCE_MORE)</span><br><span class="line">    <span class="keyword">return</span> img, <span class="string">&#x27;&#x27;</span>.join(code)</span><br></pre></td></tr></table></figure>
+<h2 id="效果预览"><a class="markdownIt-Anchor" href="#效果预览"></a> 效果预览</h2>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2022-01-24%20%E4%B8%8B%E5%8D%887.33.03.png"
+                      alt="pillow 绘制验证码" 
+                ></p>
+<p><strong>根据个人需求还可以增加随机字体大小，模糊背景等功能，更多使用方法参考</strong><a class="link"   href="https://pillow.readthedocs.org/" >Pillow 官方文档<i class="fas fa-external-link-alt"></i></a></p>
+]]></content>
+      <categories>
+        <category>Python</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Python进阶之闭包和装饰器</title>
+    <url>/2023/02/17/Python%E8%BF%9B%E9%98%B6%E4%B9%8B%E9%97%AD%E5%8C%85%E5%92%8C%E8%A3%85%E9%A5%B0%E5%99%A8/</url>
+    <content><![CDATA[<h1 id="返回函数"><a class="markdownIt-Anchor" href="#返回函数"></a> 返回函数</h1>
+<p>我们来实现一个可变参数的求和。通常情况下，求和的函数是这样定义的：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">calc_sum</span>(<span class="params">*args</span>):</span></span><br><span class="line">    ax = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> n <span class="keyword">in</span> args:</span><br><span class="line">        ax = ax + n</span><br><span class="line">    <span class="keyword">return</span> ax</span><br></pre></td></tr></table></figure>
+<p>但是，如果不需要立刻求和，而是在后面的代码中，根据需要再计算怎么办？可以不返回求和的结果，而是返回求和的函数：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">lazy_sum</span>(<span class="params">*args</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">sum</span>():</span></span><br><span class="line">        ax = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> n <span class="keyword">in</span> args:</span><br><span class="line">            ax = ax + n</span><br><span class="line">        <span class="keyword">return</span> ax</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">sum</span></span><br></pre></td></tr></table></figure>
+<p>当我们调用<code>lazy_sum()</code>时，返回的并不是求和结果，而是求和函数：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>f = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f</span><br><span class="line">&lt;function lazy_sum.&lt;<span class="built_in">locals</span>&gt;.<span class="built_in">sum</span> at <span class="number">0x101c6ed90</span>&gt;</span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，内部函数<code>sum</code>可以引用外部函数<code>lazy_sum</code>的参数和局部变量，当<code>lazy_sum</code>返回函数<code>sum</code>时，相关参数和变量都保存在返回的函数中，这种结构就是所谓的闭包。</p>
+<p>每次调用<code>lazy_sum()</code>时，每次调用都会返回一个新的函数，即使传入相同的参数：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1 = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f2 = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1==f2</span><br><span class="line"><span class="literal">False</span></span><br></pre></td></tr></table></figure>
+<p><code>f1()</code>和<code>f2()</code>的调用结果互不影响。</p>
+<h1 id="变量作用域"><a class="markdownIt-Anchor" href="#变量作用域"></a> 变量作用域</h1>
+<p>通常，函数内部的变量无法被函数外部访问，但内部可以访问；类内部的变量无法被外部访问，但类的内部可以。通俗来讲，就是内部代码可以访问外部变量，而外部代码通常无法访问内部变量。</p>
+<p>Python的作用域一共有4层，分别是：</p>
+<ul>
+<li>L （Local） 局部作用域</li>
+<li>E （Enclosing） 闭包函数外的函数中</li>
+<li>G （Global） 全局作用域</li>
+<li>B （Built-in） 内建作用域</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">x = <span class="built_in">int</span>(<span class="number">2.9</span>)  <span class="comment"># 内建作用域，查找int函数</span></span><br><span class="line"></span><br><span class="line">global_var = <span class="number">0</span>  <span class="comment"># 全局作用域</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">outer</span>():</span></span><br><span class="line">    out_var = <span class="number">1</span>  <span class="comment"># 闭包函数外的函数中</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">inner</span>():</span></span><br><span class="line">        inner_var = <span class="number">2</span>  <span class="comment"># 局部作用域</span></span><br></pre></td></tr></table></figure>
+<p>Python以**<code>L –&gt; E –&gt; G –&gt;B</code>**的规则查找变量，即：在局部找不到，便会去局部外的局部找（例如闭包），再找不到就会去全局找，最后去内建中找。如果这样还找不到，那就提示变量不存在的错误。</p>
+<ul>
+<li><strong>全局变量</strong>定义在全局作用域，是在整个程序中可以访问的变量</li>
+<li><strong>局部变量</strong>定义在函数内部，是在特定的作用域中可以访问的变量</li>
+<li><strong>自由变量</strong>是未在局部作用域中绑定的变量。</li>
+</ul>
+<p>观察下面的代码</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="number">6</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">f1</span>(<span class="params">a</span>):</span></span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(a)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(b)</span><br><span class="line"><span class="meta">... </span>  </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure>
+<p>函数体外的b为全局变量，函数体内的b为自由变量。因为自由变量b<strong>绑定</strong>到了全局变量，所以在函数f1()中能正确打印。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="number">6</span>	<span class="comment"># 此处 b 为全局变量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">f1</span>(<span class="params">a</span>):</span></span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(a)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(b)	<span class="comment"># 此处b 为自由变量</span></span><br><span class="line"><span class="meta">... </span>    b = <span class="number">9</span>	<span class="comment"># 此处b 绑定为局部变量</span></span><br><span class="line"><span class="meta">... </span>  </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">&quot;&lt;input&gt;&quot;</span>, line <span class="number">1</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">  File <span class="string">&quot;&lt;input&gt;&quot;</span>, line <span class="number">3</span>, <span class="keyword">in</span> f1</span><br><span class="line">UnboundLocalError: local variable <span class="string">&#x27;b&#x27;</span> referenced before assignment</span><br></pre></td></tr></table></figure>
+<p>由于<strong>Python不要求声明变量，而是假定在函数定义体中赋值的变量是局部变量</strong>，b 被声明为局部变量后，解释器便不会向下层级寻找全局作用域中的 <code>b = 6 </code>。</p>
+<p>如果想让解释器把b当做全局变量，那么需要使用global声明：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; b = <span class="number">6</span></span><br><span class="line">&gt;&gt;&gt; def f1(a):</span><br><span class="line">...     <span class="built_in">global</span> b</span><br><span class="line">...     print(a)</span><br><span class="line">...     print(b)</span><br><span class="line">...     b = <span class="number">9</span></span><br><span class="line">...   </span><br><span class="line">&gt;&gt;&gt; f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure>
+<h1 id="闭包"><a class="markdownIt-Anchor" href="#闭包"></a> 闭包</h1>
+<p>假如有个名为 avg 的函数，它的作用是计算不断增加的系列值的均值;例如，整个历史中某个 商品的平均收盘价。每天都会增加新价格，因此平均值要考虑至目前为止所有的价格。</p>
+<p>使用类实现的话：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Averager</span>():</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.series = []</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span>(<span class="params">self, new_value</span>):</span></span><br><span class="line">        self.series.append(new_value)</span><br><span class="line">        total = <span class="built_in">sum</span>(self.series)</span><br><span class="line">        <span class="keyword">return</span> total / <span class="built_in">len</span>(self.series)</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)  <span class="comment"># 10.0</span></span><br><span class="line">avg(<span class="number">11</span>)  <span class="comment"># 10.5</span></span><br><span class="line">avg(<span class="number">12</span>)  <span class="comment"># 11.0</span></span><br></pre></td></tr></table></figure>
+<p><strong>类实现不存在自由变量问题</strong>，因为self.series是类属性。</p>
+<p>使用函数实现：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    series = []</span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        <span class="comment"># series是自由变量</span></span><br><span class="line">        series.append(new_value)</span><br><span class="line">        total = <span class="built_in">sum</span>(series)</span><br><span class="line">        <span class="keyword">return</span> total / <span class="built_in">len</span>(series)</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">return</span> averager</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)  <span class="comment"># 10.0</span></span><br><span class="line">avg(<span class="number">11</span>)  <span class="comment"># 10.5</span></span><br><span class="line">avg(<span class="number">12</span>)  <span class="comment"># 11.0</span></span><br></pre></td></tr></table></figure>
+<p>调用 make_averager 时，返回一个 averager 函数对象。每次调用 averager 时，它会 把参数添加到系列值中，然后计算当前平均值。</p>
+<p>那么问题来了，调用完make_averager()然后 return 之后，make_averager 的局部作用域已经丢失，为什么之后 avg(10)依然能在内层函数使用 series呢？</p>
+<p>正是由 Python 中神奇的闭包特性实现：</p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2023-02-17%2010.51.34.png"
+                      alt="截屏2023-02-17 10.51.34" 
+                ></p>
+<p>series 在外层函数声明，在内层被绑定在average()的局部作用域上 。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__code__.co_varnames</span><br><span class="line">(<span class="string">&#x27;new_value&#x27;</span>, <span class="string">&#x27;total&#x27;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__code__.co_freevars</span><br><span class="line">(<span class="string">&#x27;series&#x27;</span>,)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__closure__		<span class="comment"># series 的绑定在返回的 avg 函数的 __closure__ 属性中</span></span><br><span class="line">(&lt;cell at <span class="number">0x107a44f78</span>: <span class="built_in">list</span> <span class="built_in">object</span> at <span class="number">0x107a91a48</span>&gt;,)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__closure__[<span class="number">0</span>].cell_contents</span><br><span class="line">[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>]</span><br></pre></td></tr></table></figure>
+<p><strong>综上，闭包是一种函数，它会保留定义函数时存在的自由变量的绑定，这样调用函数时，虽然定义作用域不可用了，但是仍能使用那些绑定。</strong></p>
+<h1 id="nonlocal"><a class="markdownIt-Anchor" href="#nonlocal"></a> nonlocal</h1>
+<p>在上面的例子中我们使用List 保存历史值， 如果只存储目前的总值和元素个数，然后使用这两个数计算均值：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    count = <span class="number">0</span></span><br><span class="line">total = <span class="number">0</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">        total += new_value</span><br><span class="line">        <span class="keyword">return</span> total / count</span><br><span class="line">    <span class="keyword">return</span> averager</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)		<span class="comment"># UnboundLocalError: local variable &#x27;count&#x27; referenced before assignment</span></span><br></pre></td></tr></table></figure>
+<p>问题是，当 count 是数字或任何不可变类型（向新对象赋值）时，count += 1 语句的作用其实与 count = count + 1 一样。因此，我们在 averager 的定义体中为 count 赋值了，这会把 count 变成局部变量。total 变量也受这个问题影响。</p>
+<p>但是对<strong>数字、字符串、元组等不可变类型</strong>来说，只能读取，不能更新。如果尝试重新绑定，例 如 count = count + 1，其实会隐式创建局部变量 count。这样，count 就不是自由变量 了，因此不会保存在闭包中。</p>
+<p>Python 3 引入了 <strong>nonlocal 声明</strong>。它的作用是把变量标记为自由变量， 即使在函数中为变量赋予新值了，也会变成自由变量。如果为 nonlocal 声明的变量赋予新值，闭包中保存的绑定会更新。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    count = <span class="number">0</span></span><br><span class="line">	total = <span class="number">0</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        <span class="keyword">nonlocal</span> count, total</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">        total += new_value</span><br><span class="line">        <span class="keyword">return</span> total / count</span><br><span class="line">    <span class="keyword">return</span> averager</span><br></pre></td></tr></table></figure>
+<h1 id="装饰器"><a class="markdownIt-Anchor" href="#装饰器"></a> 装饰器</h1>
+<p>装饰器即在不改动原函数功能的要求下，增加原函数的功能</p>
+<p>有以下口诀：客人空手来，还带请上楼（在内层函数添加功能），干啥都同意（执行原函数功能），有参给上楼</p>
+<p>编写一个装饰器用来统计函数的运行时间</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 以下就是一个简单的装饰器函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clock</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">cloked</span>():</span></span><br><span class="line">        start = time.time()</span><br><span class="line">        func()  <span class="comment"># 执行原函数的功能</span></span><br><span class="line">        end = time.time()</span><br><span class="line">        <span class="built_in">print</span>(end-start)</span><br><span class="line">    <span class="keyword">return</span> cloked</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">orign</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;hahahahahaha&quot;</span>)</span><br><span class="line"></span><br><span class="line">f2 = clock(orign)</span><br><span class="line">f2()</span><br><span class="line"><span class="comment"># hahahahahaha</span></span><br><span class="line"><span class="comment"># 1.0013580322265625e-05</span></span><br></pre></td></tr></table></figure>
+<p>这行代码之所以可用，就是因为 clocked 函数的闭包中包含 func 自由变量。</p>
+<p>功能已经完成了，但是这样写还是太麻烦。</p>
+<p>Python中有一个语法糖：在原函数定义的上方加上<code>@装饰器函数名称</code>，之后再使用orgin()就等同于执行以上两句。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">@clock</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">orign</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;hahahahahaha&quot;</span>)</span><br><span class="line"></span><br><span class="line">orign()</span><br></pre></td></tr></table></figure>
+<p>那么原函数中如果带有参数怎么办呢？</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">metric</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args</span>):</span></span><br><span class="line">        start = time.time()</span><br><span class="line">        func(*args) <span class="comment"># 执行原函数功能</span></span><br><span class="line">        end = time.time()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;func.__name__&#125;</span> runed <span class="subst">&#123;end-start:<span class="number">.8</span>f&#125;</span>s&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> wrapper</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 演示一个带参数的原函数</span></span><br><span class="line"><span class="meta">@metric</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_age</span>(<span class="params">name, age</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;name&#125;</span>今年<span class="subst">&#123;age&#125;</span>岁&#x27;</span>)</span><br><span class="line"></span><br><span class="line">print_age(<span class="string">&#x27;小明&#x27;</span>,<span class="number">18</span>)</span><br><span class="line"><span class="comment"># 小明今年18岁</span></span><br><span class="line"><span class="comment"># print_age runed 0.00001097s</span></span><br></pre></td></tr></table></figure>
+<h2 id="需要传入参数的装饰器"><a class="markdownIt-Anchor" href="#需要传入参数的装饰器"></a> 需要传入参数的装饰器</h2>
+<p>假如我们所定义的装饰器需要传入参数，该怎么办呢？</p>
+<p>答案是在装饰器函数增加返回函数</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 定义一个装饰器，在函数执行前打印日志</span></span><br><span class="line"><span class="keyword">import</span> functools</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">log</span>(<span class="params">text</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line"><span class="meta">        @functools.wraps(<span class="params">func</span>)</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args,**kwargs</span>):</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;text&#125;</span><span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span> func(*args, **kwargs)</span><br><span class="line">        <span class="keyword">return</span> wrapper</span><br><span class="line">    <span class="keyword">return</span> decorator</span><br><span class="line"></span><br><span class="line"><span class="meta">@log(<span class="params"><span class="string">&#x27;执行函数 &#x27;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_age</span>(<span class="params">name,age</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;name&#125;</span>今年<span class="subst">&#123;age&#125;</span>岁&#x27;</span>)</span><br><span class="line"></span><br><span class="line">print_age(<span class="string">&quot;wang&quot;</span>,<span class="number">23</span>)</span><br><span class="line"><span class="comment"># 执行函数 print_age</span></span><br><span class="line"><span class="comment"># wang今年23岁</span></span><br></pre></td></tr></table></figure>
+<p>@语法糖等同于以下三句</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">deco = log(<span class="string">&quot;执行函数 &quot;</span>)</span><br><span class="line">f = deco(print_age)</span><br><span class="line">f(<span class="string">&#x27;wang&#x27;</span>,<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+<p>而<code>@functools.wraps(func)</code>效果等同于<code>wrapper.__name__ = func.__name__</code>，防止有些依赖函数签名的代码执行就会出错。</p>
+<h2 id="可选参数的装饰器"><a class="markdownIt-Anchor" href="#可选参数的装饰器"></a> 可选参数的装饰器</h2>
+<p>如何定义一个装饰器，使其参数可选</p>
+<p>如：</p>
+<ul>
+<li>@log</li>
+<li>@log(‘exe’)</li>
+</ul>
+<p>仍以上面打印日志的装饰器为例</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">log</span>(<span class="params">text</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line"><span class="meta">        @functools.wraps(<span class="params">func</span>)</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args, **kwargs</span>):</span></span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">type</span>(text) <span class="keyword">is</span> <span class="built_in">str</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;text&#125;</span> <span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;执行了 <span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span> func(*args,**kwargs)</span><br><span class="line">        <span class="keyword">return</span> wrapper</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">type</span>(text) <span class="keyword">is</span> <span class="built_in">str</span>:   <span class="comment"># 常规的带参数</span></span><br><span class="line">        <span class="keyword">return</span> decorator</span><br><span class="line">    <span class="keyword">else</span>:   <span class="comment"># 不带参数</span></span><br><span class="line">        <span class="keyword">return</span> decorator(text)  <span class="comment">#此处text形参实际上是传入func</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@log(<span class="params"><span class="string">&#x27;exe&#x27;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">say_hello</span>(<span class="params">word</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;hello <span class="subst">&#123;word&#125;</span>!&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@log</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">say_hi</span>(<span class="params">word</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;hi <span class="subst">&#123;word&#125;</span>!&#x27;</span>)</span><br><span class="line"></span><br><span class="line">say_hello(<span class="string">&quot;wang&quot;</span>)</span><br><span class="line">say_hi(<span class="string">&quot;小明&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># exe say_hello</span></span><br><span class="line"><span class="comment"># hello wang!</span></span><br><span class="line"><span class="comment"># 执行了 say_hi</span></span><br><span class="line"><span class="comment"># hi 小明!</span></span><br></pre></td></tr></table></figure>
+<p>@语法糖等同于</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">log(<span class="string">&#x27;exe&#x27;</span>)(say_hello)(<span class="string">&quot;wang&quot;</span>)</span><br><span class="line">log(say_hi)(<span class="string">&quot;小明&quot;</span>)  <span class="comment"># 注意这里的log中的形参text实际上是传入了func</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考：</p>
+<p>《流畅的Python》</p>
+<p><a class="link"   href="https://www.liujiangblog.com/course/python/32" >刘江的博客<i class="fas fa-external-link-alt"></i></a></p>
+<p><a class="link"   href="https://www.liaoxuefeng.com/wiki/1016959663602400/1017451662295584" >廖雪峰的博客<i class="fas fa-external-link-alt"></i></a></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Python</category>
+      </categories>
+      <tags>
+        <tag>闭包</tag>
+        <tag>装饰器</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>golang中的channel及踩坑</title>
+    <url>/2024/09/08/golang%E4%B8%AD%E7%9A%84channel%E5%8F%8A%E8%B8%A9%E5%9D%91/</url>
+    <content><![CDATA[<h1 id="golang中的channel及踩坑"><a class="markdownIt-Anchor" href="#golang中的channel及踩坑"></a> golang中的channel及踩坑</h1>
+<p>通道channel是golang的高并发法宝之一，作为一个go程序员，如果不会使用channel做并发操作实在是有点说不过去。</p>
+<h2 id="通道的结构"><a class="markdownIt-Anchor" href="#通道的结构"></a> 通道的结构</h2>
+<h4 id="数据结构"><a class="markdownIt-Anchor" href="#数据结构"></a> 数据结构</h4>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> hchan <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">//channel分为无缓冲和有缓冲两种。</span></span><br><span class="line">    <span class="comment">//对于有缓冲的channel存储数据，借助的是如下循环数组的结构</span></span><br><span class="line">    qcount   <span class="keyword">uint</span>           <span class="comment">// 循环数组中的元素数量</span></span><br><span class="line">    dataqsiz <span class="keyword">uint</span>           <span class="comment">// 循环数组的长度</span></span><br><span class="line">    buf      unsafe.Pointer <span class="comment">// 指向底层循环数组的指针</span></span><br><span class="line">    elemsize <span class="keyword">uint16</span> <span class="comment">//能够收发元素的大小</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    closed   <span class="keyword">uint32</span>   <span class="comment">//channel是否关闭的标志</span></span><br><span class="line">    elemtype *_type <span class="comment">//channel中的元素类型</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//有缓冲channel内的缓冲数组会被作为一个“环型”来使用。</span></span><br><span class="line">    <span class="comment">//当下标超过数组容量后会回到第一个位置，所以需要有两个字段记录当前读和写的下标位置</span></span><br><span class="line">    sendx    <span class="keyword">uint</span>   <span class="comment">// 下一次发送数据的下标位置</span></span><br><span class="line">    recvx    <span class="keyword">uint</span>   <span class="comment">// 下一次读取数据的下标位置</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//当循环数组中没有数据时，收到了接收请求，那么接收数据的变量地址将会写入读等待队列</span></span><br><span class="line">    <span class="comment">//当循环数组中数据已满时，收到了发送请求，那么发送数据的变量地址将写入写等待队列</span></span><br><span class="line">    recvq    waitq  <span class="comment">// 读等待队列</span></span><br><span class="line">    sendq    waitq  <span class="comment">// 写等待队列</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    lock mutex <span class="comment">//互斥锁，保证读写channel时不存在并发竞争问题</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/foo.webp"
+                      alt="channe" 
+                ></p>
+<h2 id="读写通道的过程"><a class="markdownIt-Anchor" href="#读写通道的过程"></a> 读写通道的过程</h2>
+<h4 id="发送流程"><a class="markdownIt-Anchor" href="#发送流程"></a> 发送流程：</h4>
+<p>向一个channel中写数据简单过程如下：</p>
+<ol>
+<li>如果等待接收队列recvq不为空，说明缓冲区中没有数据或者没有缓冲区，此时直接从recvq取出G,并把数据写入，最后把该G唤醒，结束发送过程；</li>
+<li>如果缓冲区中有空余位置，将数据写入缓冲区，结束发送过程；</li>
+<li>如果缓冲区中没有空余位置，将待发送数据写入G，将当前G加入sendq，进入睡眠，等待被读goroutine唤醒；</li>
+</ol>
+<p>简单流程图如下：</p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/f6e1908d24f47dfd75874226cf84ae5f.png"
+                      alt="img" 
+                ></p>
+<h4 id="接收流程"><a class="markdownIt-Anchor" href="#接收流程"></a> 接收流程：</h4>
+<p>从一个channel读数据简单过程如下：</p>
+<ol>
+<li>如果等待发送队列sendq不为空，且没有缓冲区，直接从sendq中取出G，把G中数据读出，最后把G唤醒，结束读取过程；</li>
+<li>如果等待发送队列sendq不为空，此时说明缓冲区已满，从缓冲区中首部读出数据，把G中数据写入缓冲区尾部，把G唤醒，结束读取过程；</li>
+<li>如果缓冲区中有数据，则从缓冲区取出数据，结束读取过程；</li>
+<li>将当前goroutine加入recvq，进入睡眠，等待被写goroutine唤醒；</li>
+</ol>
+<p>简单流程图如下：</p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/3619daf23d6a66597d7ab8d42a0b8ce4.png"
+                      alt="img" 
+                ></p>
+<h4 id="关闭channel"><a class="markdownIt-Anchor" href="#关闭channel"></a> 关闭channel</h4>
+<p>关闭channel时会把recvq中的G全部唤醒，本该写入G的数据位置为nil。把sendq中的G全部唤醒，但这些G会panic。</p>
+<p>除此之外，panic出现的常见场景还有：</p>
+<ol>
+<li>关闭值为nil的channel</li>
+<li>关闭已经被关闭的channel</li>
+<li>向已经关闭的channel写数据</li>
+</ol>
+<h2 id="无缓冲通道和缓冲为1的通道"><a class="markdownIt-Anchor" href="#无缓冲通道和缓冲为1的通道"></a> 无缓冲通道和缓冲为1的通道</h2>
+<p>在无缓冲通道中，读和写是相互依赖的，任意一个读或写操作没有交付，都会一直阻塞。</p>
+<p>而缓冲为1的通道不同，以往channel发送数据为例，数据会优先交付给接收队列中等待的goroutine，如果等待队列为空，就会将数据到缓冲区；如果缓冲区满的话，才会阻塞到发送队列。</p>
+<p>相比之下，无缓冲通道有更强的一致性，而有缓冲通道则更灵活。</p>
+<p>在下面这个例子中，可以更好理解二者的区别：</p>
+<p>仅使用一个管道，交替打印1-100这100个数字。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">	wg := &amp;sync.WaitGroup&#123;&#125;</span><br><span class="line">	wg.Add(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">go</span> printFn(wg, <span class="number">1</span>, ch)</span><br><span class="line">	<span class="keyword">go</span> printFn(wg, <span class="number">2</span>, ch)</span><br><span class="line"></span><br><span class="line">	ch &lt;- <span class="number">1</span></span><br><span class="line"></span><br><span class="line">	wg.Wait()</span><br><span class="line">	<span class="built_in">close</span>(ch)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">printFn</span><span class="params">(wg *sync.WaitGroup, id <span class="keyword">int</span>, cur <span class="keyword">chan</span> <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> wg.Done()</span><br><span class="line">	<span class="keyword">for</span> i := id; i &lt;= <span class="number">100</span>; &#123;</span><br><span class="line">		val := &lt;-cur</span><br><span class="line">		<span class="keyword">if</span> val != id &#123;</span><br><span class="line">			cur &lt;- val</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line">		fmt.Printf(<span class="string">&quot;goroutine%v: %v\n&quot;</span>, id, i)</span><br><span class="line">		cur &lt;- (id % <span class="number">2</span>) + <span class="number">1</span> <span class="comment">// 交替传递信号</span></span><br><span class="line">		i += <span class="number">2</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用缓冲区为1的管道可以正常打印：</p>
+<blockquote>
+<p>goroutine1: 1<br />
+goroutine2: 2<br />
+…</p>
+<p>…</p>
+<p>goroutine1: 99<br />
+goroutine2: 100</p>
+</blockquote>
+<p>但是如果将chanel更改为无缓冲管道。结果将是先正常打印数字，然后死锁:</p>
+<blockquote>
+<p>…</p>
+<p>goroutine2: 98<br />
+goroutine1: 99<br />
+goroutine2: 100<br />
+fatal error: all goroutines are asleep - deadlock!</p>
+<p>goroutine 1 [semacquire]:<br />
+sync.runtime_Semacquire(0x14000002101?)<br />
+/usr/local/go/src/runtime/sema.go:62 +0x2c</p>
+<p>…</p>
+</blockquote>
+<p>原因是，无论那个goroutine先结束，另一个goroutine都会阻塞在 <code>cur &lt;- (id % 2) + 1</code>写管道这里。</p>
+<p>例如，当 goroutine 1 打印 99 之后，发送信号给 goroutine 2，希望它打印 100。此时 goroutine 2 打印 100 后，会再次尝试发送信号给 goroutine 1。</p>
+<p>但是，goroutine 1 已经没有数字需要打印了，因此它不会再从通道中读取信号，也不会继续工作。</p>
+<p>goroutine 2 此时被阻塞在发送信号的操作上，等待 goroutine 1 接收，但 goroutine 1 已经结束等待，程序进入死锁状态。</p>
+<p>而有缓冲通道则没有这个问题，goroutine直接将数据放入缓冲区buf中即可。</p>
+]]></content>
+      <categories>
+        <category>golang</category>
+      </categories>
+      <tags>
+        <tag>踩坑</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一致性哈希算法</title>
+    <url>/2023/12/25/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95/</url>
+    <content><![CDATA[<p>云计算与分布式存储课堂上，老师提出了这么一个问题：</p>
+<p>在一个场景中，如果有大规模的数据集（用户主机），如何将它们分配到有限的存储节点上。另外，假设一个存储节点（服务器主机）宕机了，如何能够快速地完成数据迁移。</p>
+<p>由此引出了一致性哈希算法。</p>
+<p>相较于传统的哈希算法，哈希算法 hash(key) % n，其中n为节点数，因此当n发生变化，在最坏的情况下可能要所有的数据都迁移。</p>
+<p>一致性哈希的本质是通过某个 hash 函数把 key 映射到一个很大的环形空间里。</p>
+<img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/v2-05f6a5d909a667990ff36581913c632e_720w.webp"
+                      alt="img" style="zoom:50%;" 
+                >
+<p>如图，存储某个数据，先计算出哈希值，然后沿着哈希环顺时针寻找到第一个存储节点。如k1和k2的存储节点是B。</p>
+<p>如果B宕机了，就沿着哈希表继续顺时针迁移到C，存储节点B中的所有节点都会迁移到C。</p>
+<img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/v2-624d4a917fc104ef0c9c9da2351116d8_720w.webp"
+                      alt="v2-624d4a917fc104ef0c9c9da2351116d8_720w" style="zoom:50%;" 
+                >
+<p>存储节点的位置同样由哈希函数得到。</p>
+<p>但是，这里有两个问题，由于哈希环的空间通常很大，存储节点不一定能均匀的分布在哈希环上，可能会出现某一个存储节点负载过多。</p>
+<p>另外，当某一个主机宕机，很有可能的原因是它的负载过大，然而我们如果将其数据全部迁移到某个主机，很容易导致“雪崩效应”，导致大量主机宕机。</p>
+<p>因此，引入“虚拟节点”，一个物理存储主机生成多个虚拟主机，可以提高主机在环上的分散程度。这样以来，即使某个主机宕机，它的数据集也能很均匀地迁移到其他主机的虚拟节点上，不会造成雪崩现象。</p>
+<img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/v2-395f37a9a6549914662e8005085f40f2_720w.webp"
+                      alt="v2-395f37a9a6549914662e8005085f40f2_720w" style="zoom:50%;" 
+                >
+<p>一致性哈希算法的代码演示：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;functional&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;random&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Hash函数，可以根据需求更改为其他函数，这里使用了std::hash</span></span><br><span class="line"><span class="keyword">typedef</span> std::function&lt;<span class="built_in">size_t</span>(<span class="keyword">const</span> std::string &amp;)&gt; HashFunction;</span><br><span class="line"><span class="comment">// 示例哈希函数</span></span><br><span class="line"><span class="function"><span class="keyword">size_t</span> <span class="title">hashFunction</span><span class="params">(<span class="keyword">const</span> std::string &amp;key)</span> </span>&#123; <span class="keyword">return</span> std::hash&lt;std::string&gt;&#123;&#125;(key); &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 一致性哈希类</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ConsistentHash</span> &#123;</span></span><br><span class="line">  <span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 虚拟节点数量，可根据需求调整</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">size_t</span> virtualNodes;</span><br><span class="line">    <span class="comment">// 哈希函数</span></span><br><span class="line">    HashFunction hashFunction;</span><br><span class="line">    <span class="comment">// 圆环</span></span><br><span class="line">    std::map&lt;<span class="keyword">size_t</span>, std::string&gt; hashRing;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 物理节点负载信息，存储节点上的 IP 数量</span></span><br><span class="line">    std::map&lt;std::string, std::vector&lt;std::string&gt;&gt; nodeIPs;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 需要服务的IP地址</span></span><br><span class="line">    std::vector&lt;std::string&gt; ipDataset; <span class="comment">// 将ipDataset作为类成员</span></span><br><span class="line">    <span class="comment">// 构造函数</span></span><br><span class="line">    <span class="built_in">ConsistentHash</span>(<span class="keyword">size_t</span> vNodes, HashFunction func) : <span class="built_in">virtualNodes</span>(vNodes), <span class="built_in">hashFunction</span>(func) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(std::vector&lt;std::string&gt; nodes)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> std::string &amp;node : nodes) &#123;</span><br><span class="line">            <span class="built_in">addNode</span>(node);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> &amp;ip : ipDataset) &#123;</span><br><span class="line">            <span class="built_in">getNode</span>(ip);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 生成模拟的 IP 地址数据集</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">generateIPDataset</span><span class="params">(<span class="keyword">int</span> dataSize)</span> </span>&#123;</span><br><span class="line">        std::random_device rd;</span><br><span class="line">        <span class="function">std::mt19937 <span class="title">gen</span><span class="params">(rd())</span></span>;</span><br><span class="line">        std::uniform_int_distribution&lt;&gt; <span class="built_in">dis</span>(<span class="number">1</span>, <span class="number">255</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; dataSize; ++i) &#123;</span><br><span class="line">            std::string ip = std::<span class="built_in">to_string</span>(<span class="built_in">dis</span>(gen)) + <span class="string">&quot;.&quot;</span> + std::<span class="built_in">to_string</span>(<span class="built_in">dis</span>(gen)) + <span class="string">&quot;.&quot;</span> +</span><br><span class="line">                             std::<span class="built_in">to_string</span>(<span class="built_in">dis</span>(gen)) + <span class="string">&quot;.&quot;</span> + std::<span class="built_in">to_string</span>(<span class="built_in">dis</span>(gen));</span><br><span class="line">            ipDataset.<span class="built_in">push_back</span>(ip);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 添加节点到哈希环</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">addNode</span><span class="params">(<span class="keyword">const</span> std::string &amp;node)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; virtualNodes; ++i) &#123;</span><br><span class="line">            <span class="comment">// 为每个节点创建多个虚拟节点，用不同的哈希值</span></span><br><span class="line">            std::string virtualNodeName = node + <span class="string">&quot;_&quot;</span> + std::<span class="built_in">to_string</span>(i);</span><br><span class="line">            <span class="keyword">size_t</span> hash = <span class="built_in">hashFunction</span>(virtualNodeName);</span><br><span class="line">            hashRing[hash] = node; <span class="comment">// 虚拟节点映射到实际节点</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">resetRing</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        nodeIPs.<span class="built_in">clear</span>(); <span class="comment">// 清除负载记录</span></span><br><span class="line">        <span class="comment">// 重新分配 IP 地址到虚拟节点</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> &amp;ip : ipDataset) &#123;</span><br><span class="line">            std::string selectedNode = <span class="built_in">getNode</span>(ip);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除节点及其对应的所有虚拟节点，并重新分配 IP 地址</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">removeNode</span><span class="params">(<span class="keyword">const</span> std::string &amp;node)</span> </span>&#123;</span><br><span class="line">        std::vector&lt;<span class="keyword">size_t</span>&gt; virtualNodeHashesToRemove;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 找到需要移除的节点对应的虚拟节点</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">auto</span> it = hashRing.<span class="built_in">begin</span>(); it != hashRing.<span class="built_in">end</span>();) &#123;</span><br><span class="line">            <span class="keyword">if</span> (it-&gt;second == node) &#123;</span><br><span class="line">                virtualNodeHashesToRemove.<span class="built_in">push_back</span>(it-&gt;first);</span><br><span class="line">                it = hashRing.<span class="built_in">erase</span>(it);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                ++it;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 从节点负载信息中移除节点</span></span><br><span class="line">        nodeIPs.<span class="built_in">erase</span>(node);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 重新分配需要移除节点上的虚拟节点对应的 IP 地址到其他节点</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">size_t</span> hash : virtualNodeHashesToRemove) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">auto</span> &amp;pair : nodeIPs) &#123;</span><br><span class="line">                std::string newNode = pair.first;</span><br><span class="line">                <span class="keyword">if</span> (newNode != node) &#123;</span><br><span class="line">                    <span class="keyword">size_t</span> newHash = <span class="built_in">hashFunction</span>(newNode + <span class="string">&quot;_&quot;</span> + std::<span class="built_in">to_string</span>(hash));</span><br><span class="line">                    hashRing[newHash] = newNode;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 根据给定的键查找对应的节点</span></span><br><span class="line">    <span class="function">std::string <span class="title">getNode</span><span class="params">(<span class="keyword">const</span> std::string &amp;key)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">size_t</span> hash = <span class="built_in">hashFunction</span>(key);</span><br><span class="line">        <span class="keyword">auto</span> it = hashRing.<span class="built_in">lower_bound</span>(hash);</span><br><span class="line">        <span class="comment">// std::cout &lt;&lt; it-&gt;first &lt;&lt; std::endl;</span></span><br><span class="line">        <span class="keyword">if</span> (it == hashRing.<span class="built_in">end</span>()) &#123;</span><br><span class="line">            <span class="comment">// 如果超出了范围，返回第一个节点（环形结构）</span></span><br><span class="line">            it = hashRing.<span class="built_in">begin</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 将 IP 添加到所选节点</span></span><br><span class="line">        std::string selectedNode = it-&gt;second;</span><br><span class="line">        nodeIPs[selectedNode].<span class="built_in">push_back</span>(key);</span><br><span class="line">        <span class="keyword">return</span> selectedNode;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取节点负载信息，按照 IP 数量计算负载百分比</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">statisticPerf</span><span class="params">()</span> <span class="keyword">const</span> </span>&#123;</span><br><span class="line">        std::map&lt;std::string, <span class="keyword">double</span>&gt; loadPercentages;</span><br><span class="line">        <span class="keyword">size_t</span> totalKeys = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Calculate total number of keys (IPs) on the entire hash ring</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;nodeIP : nodeIPs) &#123;</span><br><span class="line">            totalKeys += nodeIP.second.<span class="built_in">size</span>();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Calculate load percentage for each node</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;nodeIP : nodeIPs) &#123;</span><br><span class="line">            <span class="keyword">double</span> percentage = (<span class="keyword">static_cast</span>&lt;<span class="keyword">double</span>&gt;(nodeIP.second.<span class="built_in">size</span>()) / totalKeys) * <span class="number">100.0</span>;</span><br><span class="line">            loadPercentages[nodeIP.first] = percentage;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Output node load percentages</span></span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Node Loads (%):\n&quot;</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span> &amp;load : loadPercentages) &#123;</span><br><span class="line">            std::cout &lt;&lt; load.first &lt;&lt; <span class="string">&quot;: &quot;</span> &lt;&lt; load.second &lt;&lt; <span class="string">&quot;%&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 创建一致性哈希对象并传入MurmurHash3作为哈希函数</span></span><br><span class="line">    <span class="function">ConsistentHash <span class="title">consistentHash</span><span class="params">(<span class="number">1000</span>, hashFunction)</span></span>; <span class="comment">// 构造哈希环，设置虚拟节点个数</span></span><br><span class="line">    <span class="comment">// 生成模拟的 IP 地址数据集</span></span><br><span class="line">    consistentHash.<span class="built_in">generateIPDataset</span>(<span class="number">100000</span>); <span class="comment">// 生成模拟 IP 地址</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化存储节点，分配IP到存储节点</span></span><br><span class="line">    std::vector&lt;std::string&gt; nodeList = &#123;<span class="string">&quot;node1&quot;</span>, <span class="string">&quot;node2&quot;</span>, <span class="string">&quot;node3&quot;</span>, <span class="string">&quot;node4&quot;</span>&#125;;</span><br><span class="line">    consistentHash.<span class="built_in">init</span>(nodeList);</span><br><span class="line">    consistentHash.<span class="built_in">statisticPerf</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 增加存储节点，重新分配所有IP地址</span></span><br><span class="line">    consistentHash.<span class="built_in">addNode</span>(<span class="string">&quot;node5&quot;</span>);</span><br><span class="line">    consistentHash.<span class="built_in">resetRing</span>();</span><br><span class="line">    consistentHash.<span class="built_in">statisticPerf</span>();</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 删除存储节点，重新分配该节点上的IP</span></span><br><span class="line">    consistentHash.<span class="built_in">removeNode</span>(<span class="string">&quot;node3&quot;</span>);</span><br><span class="line">    consistentHash.<span class="built_in">statisticPerf</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码中为了负载均衡，addNode后，会重新分配数据集到所有存储节点；</p>
+<p>removeNode方法，只分配该待删除节点上的数据。</p>
+<p><code>ConsistentHash consistentHash(1, hashFunction);</code><br />
+<code>consistentHash.generateIPDataset(100000);</code></p>
+<p>即不设置虚拟节点，可以发现负载情况非常不均衡</p>
+<blockquote>
+<p>Node Loads (%):</p>
+<p>node1: 22.478%</p>
+<p>node2: 2.843%</p>
+<p>node3: 49.858%</p>
+<p>node4: 24.821%</p>
+<p>…</p>
+</blockquote>
+<p><code>ConsistentHash consistentHash(1000, hashFunction);</code><br />
+<code>consistentHash.generateIPDataset(100000);</code></p>
+<p>由于哈希函数的范围比较大，这里多设置几个虚拟节点和数据集，负载均衡。</p>
+<blockquote>
+<p>–初始情况–<br />
+Node Loads (%):<br />
+node1: 24.96%<br />
+node2: 24.93%<br />
+node3: 25.333%<br />
+node4: 24.777%<br />
+–插入存储节点–<br />
+Node Loads (%):<br />
+node1: 19.978%<br />
+node2: 19.427%<br />
+node3: 19.634%<br />
+node4: 20.024%<br />
+node5: 20.937%<br />
+–删除存储节点–<br />
+Node Loads (%):<br />
+node1: 24.8588%<br />
+node2: 24.1732%<br />
+node4: 24.916%<br />
+node5: 26.0521%</p>
+</blockquote>
+]]></content>
+  </entry>
+  <entry>
+    <title>如何拥有一个可远程更新的Hexo博客?  </title>
+    <url>/2023/09/12/%E5%A6%82%E4%BD%95%E6%8B%A5%E6%9C%89%E4%B8%80%E4%B8%AA%E5%8F%AF%E8%BF%9C%E7%A8%8B%E6%9B%B4%E6%96%B0%E7%9A%84Hexo%E5%8D%9A%E5%AE%A2?%20%20/</url>
+    <content><![CDATA[<p>Hexo作为一款简洁好用的博客框架，受到了众多人喜爱。特别是其多元丰富的主题，为大家提供了不同风格的多元选择。</p>
+<p><strong>通常大家的玩法是这样的：选一款好看的主题，搭配Github Pages，可以实现本地撰写博客，推送至远程仓库，再由Hexo从远程框架生成博客页面。</strong></p>
+<p><strong>于是不免的，存在以下弊端：</strong></p>
+<ul>
+<li><strong>不能自动部署，某一天在别的电脑逛自己博客发现一处错别字，而你此时又没有</strong><code>hexo + node.js + git</code> 等完整的开发环境，换句话说及时安装了相应环境，后续的分支问题也是相当难受。</li>
+<li><strong>没有后台管理，想彻底摆脱</strong><code>hexo d</code>命令，只能在Github上操作。</li>
+</ul>
+<p><strong>本文将演示使用</strong><code>Hexo + Github Action自动部署 + Qexo后台管理</code>的方式完成一个静态博客完全体。</p>
+<h1 id="初步搭建hexo博客并部署"><a class="markdownIt-Anchor" href="#初步搭建hexo博客并部署"></a> 初步搭建Hexo博客，并部署</h1>
+<p><strong>首先你需要有一个Hexo博客，此类文章相当多，具体劳请网上冲浪。这里推荐一个网站</strong><a class="link"   href="https://easyhexo.com/1-Hexo-install-and-config/1-2-install-hexo.html" >Easy Hexo<i class="fas fa-external-link-alt"></i></a>，里面有详细的Hexo博客搭建教程，包括部署到Github Pages，非常的详细。</p>
+<p><strong>主题的话，挑一个自己喜欢的即可，这里用的是</strong><a class="link"   href="https://keep-docs.xpoet.cn/" >Keep主题<i class="fas fa-external-link-alt"></i></a>，支持npm一行安装，也是相当的方便。</p>
+<p><strong>有域名的话，也可以按教程把域名解析配置一下。</strong></p>
+<h1 id="自动化部署"><a class="markdownIt-Anchor" href="#自动化部署"></a> 自动化部署</h1>
+<p><strong>自动化部署好处多多，有了自动化部署相当于，每次对博客内容更改之后，将不再需要</strong><code>hexo d</code>去部署你的博客了，并且可以同时自动部署多个服务器上，例如：GitHub Pages、Gitee pages、七牛云、阿里云、腾讯云等等。</p>
+<p><strong>按教程一项一项往下走即可</strong></p>
+<p><a class="link"   href="https://juejin.cn/post/6943895271751286821" >如何使用 GitHub Actions 自动部署 Hexo 博客<i class="fas fa-external-link-alt"></i></a></p>
+<p><strong>这里总结一下原理：</strong></p>
+<ul>
+<li><strong>公有仓库即你博客的源码，对应github.io的源代码文件</strong></li>
+<li><strong>私有仓库即hexo文件夹，即你主机上安装hexo初始化时的文件夹，这里只是相当于将其放在远程服务器上，依托Github Action强大的功能，监视此存在服务器上的文件夹，有文章更新时，脚本帮你完成部署操作至公有仓库</strong></li>
+</ul>
+<h1 id="后台管理"><a class="markdownIt-Anchor" href="#后台管理"></a> 后台管理</h1>
+<p><strong>完成自动化部署后，我们更新博客已经相当方便了。要是有后台管理功能的话，我们的博客就更像是一个动态博客了，想写或是修改文章时直接在后台操作，不用在本地用</strong><code>git push</code>。</p>
+<p><strong>Qexo可以很好的帮我们完成此任务，其界面布局也是非常漂亮。</strong></p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://user-images.githubusercontent.com/51912589/262077464-75b7bc95-419e-4daf-8c5a-fcf3dbed8c1b.png"
+                      alt="Qexo后台" 
+                ></p>
+<p><strong>这里我采用的是Vercel 部署配合 MongoDB数据库一键部署，跟着</strong><a class="link"   href="https://www.oplog.cn/qexo/start/build.html#vercel-%E9%83%A8%E7%BD%B2-mongodb" >教程<i class="fas fa-external-link-alt"></i></a>一步步完成，只是注册账户繁琐需要些时间。</p>
+<p><strong>完成后按提示填写Github Token之后就可以，使用Qexo对后台进行管理了。</strong></p>
+<h1 id="评论功能"><a class="markdownIt-Anchor" href="#评论功能"></a> 评论功能</h1>
+<p><strong>这里评论使用的是waline，与Keep主题兼容，同时也支持vercel一键部署，可以和我们的后台项目一同管理。</strong></p>
+<p>**配置教程参考官方教程 **<a class="link"   href="https://waline.js.org/guide/get-started.html" >Waline 官方配置教程<i class="fas fa-external-link-alt"></i></a>，获取 <code>server_url</code> 服务端地址，并填入主题配置项中。</p>
+<p><strong>这里要注意LeanCloud数据库如果连续超过30天没有发生api请求，你的应用将会被归档，需要重新激活。</strong></p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2023-09-12%2015.53.00.png"
+                      alt="评论归档" 
+                ></p>
+<h1 id="域名解析"><a class="markdownIt-Anchor" href="#域名解析"></a> 域名解析</h1>
+<p><strong>后台管理和评论管理的源代码都在vercel托管，我们访问时需要app访问，</strong><code>blog-comments-fxxxxxq-beyond24.vercel.app</code>，不够优雅。</p>
+<p><strong>我们可以同时为它们设置域名解析。</strong></p>
+<p><strong><a class="link"   href="http://xn--domin-r52h07c6zlbubo1swwke15a2m8btdxd.com" >假设你的博客域名是domin.com<i class="fas fa-external-link-alt"></i></a>，后台和评论都可以设置三级域名解析如下：</strong></p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2023-09-12%2016.27.41.png"
+                      alt="域名解析" 
+                ></p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2023-09-12%2016.42.58.png"
+                      alt="vercel设置" 
+                ></p>
+<p><strong>完成之后，我们就可以通过</strong><code>domin.com</code>访问博客；<code>admin.domin.com</code>管理后台；<code>comments.domin.com</code>管理评论了！</p>
+<p><strong>发表新文章时也可以直接进入后台发表了，尽显优雅！</strong></p>
+]]></content>
+  </entry>
+  <entry>
+    <title>快速排序和线性快速查找</title>
+    <url>/2024/03/22/%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F%E5%92%8C%E7%BA%BF%E6%80%A7%E5%BF%AB%E9%80%9F%E6%9F%A5%E6%89%BE/</url>
+    <content><![CDATA[<p>事情要从一道力扣题目说起。</p>
+<p><a class="link" href="https://leetcode.cn/problems/kth-largest-element-in-an-array/">215. 数组中的第K个最大元素<i class="fas fa-external-link-alt"></i></a></p>
+<p>你看着题目名字，简直不是量身为堆排序设计的么，我反手一个大顶堆。。。等等</p>
+<p>什么？强制要求时间复杂度O(n)。</p>
+<img lazyload="" alt="006APoFYly8hbv05euqsej30ku0lhq3p" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/006APoFYly8hbv05euqsej30ku0lhq3p.jpg" style="zoom: 50%;">
+<p>好吧， 我是若智。看看题解先。</p>
+<p>快速查找？</p>
+<p>快速查找我会啊，不过时间复杂度也不是O(n)？管他，先查了再说！</p>
+<p>思路是这样，类似使用快速排序把数组按照从大到小的顺序排序。使用基准元素，找到一个分割点pivot，分割点左边的元素都是大于基准数的，右边小于基准数。</p>
+<p>然后！！！重点来了，正经的快速排序是继续分治下去，排序左区间和右区间。对于这个题目，只用检查pivot在该区间的排名是不是等于k就行了。</p>
+<p>代码长这样：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> {</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span> </span>{</span><br><span class="line">        <span class="keyword">int</span> i = left, j = right;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (i &lt; j) {</span><br><span class="line">            <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &lt;= nums[left]) {</span><br><span class="line">                j--;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &gt;= nums[left]) {</span><br><span class="line">                i++;</span><br><span class="line">            }</span><br><span class="line">            <span class="built_in">swap</span>(nums[i], nums[j]);</span><br><span class="line">        }</span><br><span class="line">        <span class="built_in">swap</span>(nums[left], nums[i]);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">quickSelect</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> k)</span> </span>{</span><br><span class="line">        <span class="keyword">int</span> pivotIndex = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">        <span class="keyword">int</span> rank = pivotIndex - left + <span class="number">1</span>; <span class="comment">// 计算主元在当前子数组中的排名</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (rank == k) {</span><br><span class="line">            <span class="keyword">return</span> nums[pivotIndex]; <span class="comment">// 主元就是第 k 个最大的元素</span></span><br><span class="line">        } <span class="keyword">else</span> <span class="keyword">if</span> (rank &lt; k) {</span><br><span class="line">            <span class="comment">// 第 k 个最大的元素在主元右侧的子数组中</span></span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, pivotIndex + <span class="number">1</span>, right, k - rank);</span><br><span class="line">        } <span class="keyword">else</span> {</span><br><span class="line">            <span class="comment">// 第 k 个最大的元素在主元左侧的子数组中</span></span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, left, pivotIndex - <span class="number">1</span>, k);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">findKthLargest</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> k)</span> </span>{</span><br><span class="line">        <span class="keyword">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, <span class="number">0</span>, n - <span class="number">1</span>, k);</span><br><span class="line">    }</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+<p>一切都是那么的美好。</p>
+<img lazyload="" alt="截屏2024-03-21 23.21.03" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2024-03-21%2023.21.03.png" style="zoom:50%;">
+<p>嗯？你是故意找茬是不是！</p>
+<img lazyload="" alt="ceeb653ely8h2astguodsg204g04iu0x" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/ceeb653ely8h2astguodsg204g04iu0x.gif">
+<p>好，不着急，冷静冷静，先分析分析时间效率。</p>
+<p>最坏情况会进行n-1次分割，每次对子数组的一半进行交换。</p>
+<p>语句次数：</p>
+<img lazyload="" alt="截屏2024-03-21 23.29.52" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2024-03-21%2023.29.52.png" style="zoom:50%;">
+<p>那么时间复杂度为O(n^2)</p>
+<p>所以是不满足题目要求的。</p>
+<p>问题就在于分割时太不均衡了。</p>
+<p>如果每次都分割n/2的话。</p>
+<p>交换次数就是：</p>
+<p class="katex-block"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>n</mi><mo>+</mo><mfrac><mi>n</mi><mn>2</mn></mfrac><mo>+</mo><mfrac><mi>n</mi><mn>4</mn></mfrac><mo>+</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo>+</mo><mfrac><mi>n</mi><mi>n</mi></mfrac><mo>=</mo><mn>2</mn><mi>n</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">n + \frac{n}{2} + \frac{n}{4} +...+ \frac{n}{n} = 2n -1
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.7935600000000003em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.10756em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.7935600000000003em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.10756em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">4</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.66666em;vertical-align:-0.08333em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.7935600000000003em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.10756em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span></span></p>
+<p>就满足题目的要求 时间复杂度O(n)了。</p>
+<p>那么怎么优化，能使分割尽量均匀呢。</p>
+<p>我先想到的是随机基准数，不再像以前一样每次都使用第一个元素当做基准数，而是随机从数组中选择。</p>
+<p>试了一试，最后一个测试用例还是超时。</p>
+<p>看看题解大家都怎么说。</p>
+<p>看k神的题解里提到了三路快速排序。什么玩意，知识盲区啊这是。</p>
+<p>赶紧找文章恶补一下。</p>
+<p><a class="link" href="https://segmentfault.com/a/1190000021726667">图解快速排序及双路三路快速排序<i class="fas fa-external-link-alt"></i></a></p>
+<p>哦，学到了。</p>
+<p>原来我之前一直用的，或者说默写的是二路快速排序啊我去。</p>
+<p>一路：小于等于基准数的在同一个子数组。具体在 &lt;v 还是 &gt;v 看循环中的定义方式。</p>
+<p><img lazyload="" alt="img" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/1460000021726674.png"></p>
+<p>二路：=v 的元素分散在两个子数组</p>
+<p><img lazyload="" alt="img" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/1460000021726681.png"></p>
+<p>三路：=v的元素单独设置一个子数组</p>
+<p><img lazyload="" alt="img" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/1460000021726682-20240322115557108.png"></p>
+<p>那为什么我的二路排序过不了捏。</p>
+<p>重点是重复元素，在最后的测试用例里有大量的重复元素1，即使使用随机基准数、三数取中法都很容易选择数字1成为基准数，因此一路排序和二路排序都会存在大量的1的交换，使得时间效率很低。</p>
+<p>使用三路排序，当1第一次成为基准数，就直接把所有的1划分的一个区间，后面就不需要再处理这些1了。</p>
+<p>好的，现在来使用三路选择的方法解决原来的题目。</p>
+<p>题目要求返回第k大元素，因此单调减的排序比较好操作。很简单调整gt(greater than)和lt(less than)的指针位置就好了，依葫芦画瓢，像下面这样。</p>
+<img lazyload="" alt="image-20240322113353364" data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/image-20240322113353364.png" style="zoom: 50%;">
+<p>检查k是否在 = v 的区间中，在的话直接返回该位置的数字；否则递归选择在左区间或者右区间查找。</p>
+<p>三数取中法进一步提升代码健壮性，以达到接近O(n)的时间效率。</p>
+<p>最终的代码如下</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> {</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 三数取中法选择基准数，并调整基准数到 left 位置</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">medianOfThree</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span> </span>{</span><br><span class="line">        <span class="keyword">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &gt; nums[right]) <span class="built_in">swap</span>(nums[mid], nums[right]);</span><br><span class="line">        <span class="keyword">if</span> (nums[left] &gt; nums[right]) <span class="built_in">swap</span>(nums[left], nums[right]);</span><br><span class="line">        <span class="keyword">if</span> (nums[mid] &gt; nums[left]) <span class="built_in">swap</span>(nums[mid], nums[left]);</span><br><span class="line">        <span class="comment">// 此时，nums[left] 是中间值，将作为基准数</span></span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function">pair&lt;<span class="keyword">int</span>, <span class="keyword">int</span>&gt; <span class="title">partition</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span> </span>{</span><br><span class="line">        <span class="built_in">medianOfThree</span>(nums, left, right); <span class="comment">// 优化基准数选择</span></span><br><span class="line">        <span class="keyword">int</span> pivot = nums[left];</span><br><span class="line">        <span class="keyword">int</span> gt = left, lt = right + <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">int</span> i = left + <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (i &lt; lt) {</span><br><span class="line">            <span class="keyword">if</span> (nums[i] &gt; pivot) {</span><br><span class="line">                <span class="built_in">swap</span>(nums[i], nums[++gt]);</span><br><span class="line">                i++;</span><br><span class="line">            } <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] &lt; pivot) {</span><br><span class="line">                <span class="built_in">swap</span>(nums[i], nums[--lt]);</span><br><span class="line">            } <span class="keyword">else</span> {</span><br><span class="line">                i++;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">        <span class="built_in">swap</span>(nums[left], nums[gt]);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> {gt - <span class="number">1</span>, lt};</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">quickSelect</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> k)</span> </span>{</span><br><span class="line">        pair&lt;<span class="keyword">int</span>, <span class="keyword">int</span>&gt; p = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">        <span class="keyword">if</span> (k - <span class="number">1</span> &gt; p.first &amp;&amp; k - <span class="number">1</span> &lt; p.second) { <span class="comment">// 修改此处</span></span><br><span class="line">            <span class="keyword">return</span> nums[k - <span class="number">1</span>];</span><br><span class="line">        } <span class="keyword">else</span> <span class="keyword">if</span> (k - <span class="number">1</span> &lt;= p.first) { <span class="comment">// 修改此处</span></span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, left, p.first, k); <span class="comment">// 修改此处</span></span><br><span class="line">        } <span class="keyword">else</span> {</span><br><span class="line">            <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, p.second, right, k); <span class="comment">// 修改此处</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">findKthLargest</span><span class="params">(vector&lt;<span class="keyword">int</span>&gt;&amp; nums, <span class="keyword">int</span> k)</span> </span>{</span><br><span class="line">        <span class="keyword">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">quickSelect</span>(nums, <span class="number">0</span>, n - <span class="number">1</span>, k);</span><br><span class="line">    }</span><br><span class="line">};</span><br></pre></td></tr></table></figure>
+]]></content>
+      <tags>
+        <tag>排序</tag>
+      </tags>
+  </entry>
+</search>

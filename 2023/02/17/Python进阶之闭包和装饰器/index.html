@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="Hexo Theme Keep">
+    <meta name="author" content="Walter">
+    
+    <title>
+        
+            Python进阶之闭包和装饰器 |
+        
+        The Secret Life of Walter
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <link rel="shortcut icon" href="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-logo.png">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/fontawesome.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/regular.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/solid.min.css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/font/css/brands.min.css">
+    <script id="hexo-configurations">
+    let KEEP = window.KEEP || {}
+    KEEP.hexo_config = {"hostname":"example.com","root":"/","language":"zh-CN","path":"search.xml"}
+    KEEP.theme_config = {"toc":{"enable":true,"number":true,"expand_all":true,"init_open":true},"style":{"primary_color":"#666666","logo":null,"favicon":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-logo.png","avatar":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-avatar.jpeg","font_size":null,"font_family":null,"hover":{"shadow":true,"scale":false},"first_screen":{"enable":true,"header_transparent":true,"background_img":"https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blogBg.jpg","description":"To see the world, things dangerous to come to ,To see behind walls ,To draw closer ,To find each other and to feel .That is the purpose of LIFE .","font_color":"#FFFFFF","hitokoto":false},"scroll":{"progress_bar":true,"percent":false}},"local_search":{"enable":true,"preload":true},"code_copy":{},"code_block":{"tools":{"enable":true,"style":"default"},"highlight_theme":"default"},"side_tools":{},"pjax":{"enable":true},"lazyload":{"enable":true},"comment":{"enable":true,"use":"waline","valine":{"appid":null,"appkey":null,"server_urls":null,"placeholder":null},"gitalk":{"github_id":"beyond24","github_admins":null,"repository":"blog_comments","client_id":"46286efbc3c47d9cd09a","client_secret":"531394d4ce5656f12e988b22a4096006fb9b816d","proxy":null},"twikoo":{"env_id":null,"region":null,"version":"1.6.8"},"waline":{"server_url":"https://blog-comments-f2bthmc6q-beyond24.vercel.app/","reaction":true,"version":2}},"post":{"author_label":{"enable":true,"auto":true,"custom_label_list":["Trainee","Engineer","Architect"]},"word_count":{"enable":true,"wordcount":true,"min2read":true},"img_align":"left","copyright_info":false},"version":"3.6.1"}
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"}
+    KEEP.language_code_block = {"copy":"复制代码","copied":"已复制","fold":"折叠代码块","folded":"已折叠"}
+    KEEP.language_copy_copyright = {"copy":"复制版权信息","copied":"已复制","title":"原文标题","author":"原文作者","link":"原文链接"}
+  </script>
+<meta name="generator" content="Hexo 6.0.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+        <span class="scroll-progress-bar"></span>
+    
+
+    
+        <span class="pjax-progress-bar"></span>
+        <i class="pjax-progress-icon fas fa-circle-notch fa-spin"></i>
+    
+</div>
+
+
+<main class="page-container">
+
+    
+
+    <div class="page-main-content">
+
+        <div class="page-main-content-top">
+            
+<header class="header-wrapper">
+
+    <div class="header-content">
+        <div class="left">
+            
+            <a class="logo-title" href="/">
+               The Secret Life of Walter
+            </a>
+        </div>
+
+        <div class="right">
+            <div class="pc">
+                <ul class="menu-list">
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/"
+                            >
+                                首页
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/archives"
+                            >
+                                归档
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/tags"
+                            >
+                                标签
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/categories"
+                            >
+                                分类
+                            </a>
+                        </li>
+                    
+                        <li class="menu-item">
+                            <a class=""
+                               href="/about"
+                            >
+                                关于
+                            </a>
+                        </li>
+                    
+                    
+                        <li class="menu-item search search-popup-trigger">
+                            <i class="fas fa-search"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <div class="mobile">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div>
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list">
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/">首页</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/archives">归档</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/tags">标签</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/categories">分类</a>
+                </li>
+            
+                <li class="drawer-menu-item flex-center">
+                    <a class=""
+                       href="/about">关于</a>
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle">
+
+            <div class="main-content">
+
+                
+                    <div class="fade-in-down-animation">
+    <div class="post-page-container">
+        <div class="article-content-container">
+
+            <div class="article-title">
+                <span class="title-hover-animation">Python进阶之闭包和装饰器</span>
+            </div>
+
+            
+                <div class="article-header">
+                    <div class="avatar">
+                        <img src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/blog-avatar.jpeg">
+                    </div>
+                    <div class="info">
+                        <div class="author">
+                            <span class="name">Walter</span>
+                            
+                                <span class="author-label">Lv1</span>
+                            
+                        </div>
+                        <div class="meta-info">
+                            
+<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        
+            <i class="fa-regular fa-calendar-plus"></i>&nbsp;
+        
+        <span class="pc">2023-02-17 12:32:51</span>
+        <span class="mobile">2023-02-17 12:32</span>
+    </span>
+    
+        <span class="article-update-date article-meta-item">
+        <i class="fas fa-file-pen"></i>&nbsp;
+        <span class="pc">2023-03-05 13:02:48</span>
+    </span>
+    
+    
+        <span class="article-categories article-meta-item">
+            <i class="fas fa-folder"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/categories/Python/">Python</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fas fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/%E9%97%AD%E5%8C%85/">闭包</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/%E8%A3%85%E9%A5%B0%E5%99%A8/">装饰器</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+        <span class="article-wordcount article-meta-item">
+            <i class="fas fa-file-word"></i>&nbsp;<span>2.4k 字</span>
+        </span>
+    
+    
+        <span class="article-min2read article-meta-item">
+            <i class="fas fa-clock"></i>&nbsp;<span>9 分钟</span>
+        </span>
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+                        </div>
+                    </div>
+                </div>
+            
+
+            <div class="article-content keep-markdown-body">
+                
+
+                <h1 id="返回函数"><a class="markdownIt-Anchor" href="#返回函数"></a> 返回函数</h1>
+<p>我们来实现一个可变参数的求和。通常情况下，求和的函数是这样定义的：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">calc_sum</span>(<span class="params">*args</span>):</span></span><br><span class="line">    ax = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> n <span class="keyword">in</span> args:</span><br><span class="line">        ax = ax + n</span><br><span class="line">    <span class="keyword">return</span> ax</span><br></pre></td></tr></table></figure>
+<p>但是，如果不需要立刻求和，而是在后面的代码中，根据需要再计算怎么办？可以不返回求和的结果，而是返回求和的函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">lazy_sum</span>(<span class="params">*args</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">sum</span>():</span></span><br><span class="line">        ax = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> n <span class="keyword">in</span> args:</span><br><span class="line">            ax = ax + n</span><br><span class="line">        <span class="keyword">return</span> ax</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">sum</span></span><br></pre></td></tr></table></figure>
+<p>当我们调用<code>lazy_sum()</code>时，返回的并不是求和结果，而是求和函数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>f = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f</span><br><span class="line">&lt;function lazy_sum.&lt;<span class="built_in">locals</span>&gt;.<span class="built_in">sum</span> at <span class="number">0x101c6ed90</span>&gt;</span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，内部函数<code>sum</code>可以引用外部函数<code>lazy_sum</code>的参数和局部变量，当<code>lazy_sum</code>返回函数<code>sum</code>时，相关参数和变量都保存在返回的函数中，这种结构就是所谓的闭包。</p>
+<p>每次调用<code>lazy_sum()</code>时，每次调用都会返回一个新的函数，即使传入相同的参数：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1 = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f2 = lazy_sum(<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">9</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1==f2</span><br><span class="line"><span class="literal">False</span></span><br></pre></td></tr></table></figure>
+<p><code>f1()</code>和<code>f2()</code>的调用结果互不影响。</p>
+<h1 id="变量作用域"><a class="markdownIt-Anchor" href="#变量作用域"></a> 变量作用域</h1>
+<p>通常，函数内部的变量无法被函数外部访问，但内部可以访问；类内部的变量无法被外部访问，但类的内部可以。通俗来讲，就是内部代码可以访问外部变量，而外部代码通常无法访问内部变量。</p>
+<p>Python的作用域一共有4层，分别是：</p>
+<ul>
+<li>L （Local） 局部作用域</li>
+<li>E （Enclosing） 闭包函数外的函数中</li>
+<li>G （Global） 全局作用域</li>
+<li>B （Built-in） 内建作用域</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="built_in">int</span>(<span class="number">2.9</span>)  <span class="comment"># 内建作用域，查找int函数</span></span><br><span class="line"></span><br><span class="line">global_var = <span class="number">0</span>  <span class="comment"># 全局作用域</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">outer</span>():</span></span><br><span class="line">    out_var = <span class="number">1</span>  <span class="comment"># 闭包函数外的函数中</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">inner</span>():</span></span><br><span class="line">        inner_var = <span class="number">2</span>  <span class="comment"># 局部作用域</span></span><br></pre></td></tr></table></figure>
+<p>Python以**<code>L –&gt; E –&gt; G –&gt;B</code>**的规则查找变量，即：在局部找不到，便会去局部外的局部找（例如闭包），再找不到就会去全局找，最后去内建中找。如果这样还找不到，那就提示变量不存在的错误。</p>
+<ul>
+<li><strong>全局变量</strong>定义在全局作用域，是在整个程序中可以访问的变量</li>
+<li><strong>局部变量</strong>定义在函数内部，是在特定的作用域中可以访问的变量</li>
+<li><strong>自由变量</strong>是未在局部作用域中绑定的变量。</li>
+</ul>
+<p>观察下面的代码</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="number">6</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">f1</span>(<span class="params">a</span>):</span></span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(a)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(b)</span><br><span class="line"><span class="meta">... </span>  </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure>
+<p>函数体外的b为全局变量，函数体内的b为自由变量。因为自由变量b<strong>绑定</strong>到了全局变量，所以在函数f1()中能正确打印。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="number">6</span>	<span class="comment"># 此处 b 为全局变量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">f1</span>(<span class="params">a</span>):</span></span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(a)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(b)	<span class="comment"># 此处b 为自由变量</span></span><br><span class="line"><span class="meta">... </span>    b = <span class="number">9</span>	<span class="comment"># 此处b 绑定为局部变量</span></span><br><span class="line"><span class="meta">... </span>  </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">&quot;&lt;input&gt;&quot;</span>, line <span class="number">1</span>, <span class="keyword">in</span> &lt;module&gt;</span><br><span class="line">  File <span class="string">&quot;&lt;input&gt;&quot;</span>, line <span class="number">3</span>, <span class="keyword">in</span> f1</span><br><span class="line">UnboundLocalError: local variable <span class="string">&#x27;b&#x27;</span> referenced before assignment</span><br></pre></td></tr></table></figure>
+<p>由于<strong>Python不要求声明变量，而是假定在函数定义体中赋值的变量是局部变量</strong>，b 被声明为局部变量后，解释器便不会向下层级寻找全局作用域中的 <code>b = 6 </code>。</p>
+<p>如果想让解释器把b当做全局变量，那么需要使用global声明：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; b = <span class="number">6</span></span><br><span class="line">&gt;&gt;&gt; def f1(a):</span><br><span class="line">...     <span class="built_in">global</span> b</span><br><span class="line">...     print(a)</span><br><span class="line">...     print(b)</span><br><span class="line">...     b = <span class="number">9</span></span><br><span class="line">...   </span><br><span class="line">&gt;&gt;&gt; f1(<span class="number">3</span>)</span><br><span class="line"><span class="number">3</span></span><br><span class="line"><span class="number">6</span></span><br></pre></td></tr></table></figure>
+<h1 id="闭包"><a class="markdownIt-Anchor" href="#闭包"></a> 闭包</h1>
+<p>假如有个名为 avg 的函数，它的作用是计算不断增加的系列值的均值;例如，整个历史中某个 商品的平均收盘价。每天都会增加新价格，因此平均值要考虑至目前为止所有的价格。</p>
+<p>使用类实现的话：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Averager</span>():</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.series = []</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__call__</span>(<span class="params">self, new_value</span>):</span></span><br><span class="line">        self.series.append(new_value)</span><br><span class="line">        total = <span class="built_in">sum</span>(self.series)</span><br><span class="line">        <span class="keyword">return</span> total / <span class="built_in">len</span>(self.series)</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)  <span class="comment"># 10.0</span></span><br><span class="line">avg(<span class="number">11</span>)  <span class="comment"># 10.5</span></span><br><span class="line">avg(<span class="number">12</span>)  <span class="comment"># 11.0</span></span><br></pre></td></tr></table></figure>
+<p><strong>类实现不存在自由变量问题</strong>，因为self.series是类属性。</p>
+<p>使用函数实现：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    series = []</span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        <span class="comment"># series是自由变量</span></span><br><span class="line">        series.append(new_value)</span><br><span class="line">        total = <span class="built_in">sum</span>(series)</span><br><span class="line">        <span class="keyword">return</span> total / <span class="built_in">len</span>(series)</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">return</span> averager</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)  <span class="comment"># 10.0</span></span><br><span class="line">avg(<span class="number">11</span>)  <span class="comment"># 10.5</span></span><br><span class="line">avg(<span class="number">12</span>)  <span class="comment"># 11.0</span></span><br></pre></td></tr></table></figure>
+<p>调用 make_averager 时，返回一个 averager 函数对象。每次调用 averager 时，它会 把参数添加到系列值中，然后计算当前平均值。</p>
+<p>那么问题来了，调用完make_averager()然后 return 之后，make_averager 的局部作用域已经丢失，为什么之后 avg(10)依然能在内层函数使用 series呢？</p>
+<p>正是由 Python 中神奇的闭包特性实现：</p>
+<p><img  
+                     lazyload
+                     alt="image"
+                     data-src="https://beyond24.oss-cn-shanghai.aliyuncs.com/ImgBed/%E6%88%AA%E5%B1%8F2023-02-17%2010.51.34.png"
+                      alt="截屏2023-02-17 10.51.34" 
+                ></p>
+<p>series 在外层函数声明，在内层被绑定在average()的局部作用域上 。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__code__.co_varnames</span><br><span class="line">(<span class="string">&#x27;new_value&#x27;</span>, <span class="string">&#x27;total&#x27;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__code__.co_freevars</span><br><span class="line">(<span class="string">&#x27;series&#x27;</span>,)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__closure__		<span class="comment"># series 的绑定在返回的 avg 函数的 __closure__ 属性中</span></span><br><span class="line">(&lt;cell at <span class="number">0x107a44f78</span>: <span class="built_in">list</span> <span class="built_in">object</span> at <span class="number">0x107a91a48</span>&gt;,)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>avg.__closure__[<span class="number">0</span>].cell_contents</span><br><span class="line">[<span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>]</span><br></pre></td></tr></table></figure>
+<p><strong>综上，闭包是一种函数，它会保留定义函数时存在的自由变量的绑定，这样调用函数时，虽然定义作用域不可用了，但是仍能使用那些绑定。</strong></p>
+<h1 id="nonlocal"><a class="markdownIt-Anchor" href="#nonlocal"></a> nonlocal</h1>
+<p>在上面的例子中我们使用List 保存历史值， 如果只存储目前的总值和元素个数，然后使用这两个数计算均值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    count = <span class="number">0</span></span><br><span class="line">total = <span class="number">0</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">        total += new_value</span><br><span class="line">        <span class="keyword">return</span> total / count</span><br><span class="line">    <span class="keyword">return</span> averager</span><br><span class="line"></span><br><span class="line">avg = make_averager()</span><br><span class="line">avg(<span class="number">10</span>)		<span class="comment"># UnboundLocalError: local variable &#x27;count&#x27; referenced before assignment</span></span><br></pre></td></tr></table></figure>
+<p>问题是，当 count 是数字或任何不可变类型（向新对象赋值）时，count += 1 语句的作用其实与 count = count + 1 一样。因此，我们在 averager 的定义体中为 count 赋值了，这会把 count 变成局部变量。total 变量也受这个问题影响。</p>
+<p>但是对<strong>数字、字符串、元组等不可变类型</strong>来说，只能读取，不能更新。如果尝试重新绑定，例 如 count = count + 1，其实会隐式创建局部变量 count。这样，count 就不是自由变量 了，因此不会保存在闭包中。</p>
+<p>Python 3 引入了 <strong>nonlocal 声明</strong>。它的作用是把变量标记为自由变量， 即使在函数中为变量赋予新值了，也会变成自由变量。如果为 nonlocal 声明的变量赋予新值，闭包中保存的绑定会更新。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">make_averager</span>():</span></span><br><span class="line">    count = <span class="number">0</span></span><br><span class="line">	total = <span class="number">0</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">averager</span>(<span class="params">new_value</span>):</span></span><br><span class="line">        <span class="keyword">nonlocal</span> count, total</span><br><span class="line">        count += <span class="number">1</span></span><br><span class="line">        total += new_value</span><br><span class="line">        <span class="keyword">return</span> total / count</span><br><span class="line">    <span class="keyword">return</span> averager</span><br></pre></td></tr></table></figure>
+<h1 id="装饰器"><a class="markdownIt-Anchor" href="#装饰器"></a> 装饰器</h1>
+<p>装饰器即在不改动原函数功能的要求下，增加原函数的功能</p>
+<p>有以下口诀：客人空手来，还带请上楼（在内层函数添加功能），干啥都同意（执行原函数功能），有参给上楼</p>
+<p>编写一个装饰器用来统计函数的运行时间</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 以下就是一个简单的装饰器函数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clock</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">cloked</span>():</span></span><br><span class="line">        start = time.time()</span><br><span class="line">        func()  <span class="comment"># 执行原函数的功能</span></span><br><span class="line">        end = time.time()</span><br><span class="line">        <span class="built_in">print</span>(end-start)</span><br><span class="line">    <span class="keyword">return</span> cloked</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">orign</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;hahahahahaha&quot;</span>)</span><br><span class="line"></span><br><span class="line">f2 = clock(orign)</span><br><span class="line">f2()</span><br><span class="line"><span class="comment"># hahahahahaha</span></span><br><span class="line"><span class="comment"># 1.0013580322265625e-05</span></span><br></pre></td></tr></table></figure>
+<p>这行代码之所以可用，就是因为 clocked 函数的闭包中包含 func 自由变量。</p>
+<p>功能已经完成了，但是这样写还是太麻烦。</p>
+<p>Python中有一个语法糖：在原函数定义的上方加上<code>@装饰器函数名称</code>，之后再使用orgin()就等同于执行以上两句。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@clock</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">orign</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;hahahahahaha&quot;</span>)</span><br><span class="line"></span><br><span class="line">orign()</span><br></pre></td></tr></table></figure>
+<p>那么原函数中如果带有参数怎么办呢？</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">metric</span>(<span class="params">func</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args</span>):</span></span><br><span class="line">        start = time.time()</span><br><span class="line">        func(*args) <span class="comment"># 执行原函数功能</span></span><br><span class="line">        end = time.time()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;func.__name__&#125;</span> runed <span class="subst">&#123;end-start:<span class="number">.8</span>f&#125;</span>s&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> wrapper</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 演示一个带参数的原函数</span></span><br><span class="line"><span class="meta">@metric</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_age</span>(<span class="params">name, age</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;name&#125;</span>今年<span class="subst">&#123;age&#125;</span>岁&#x27;</span>)</span><br><span class="line"></span><br><span class="line">print_age(<span class="string">&#x27;小明&#x27;</span>,<span class="number">18</span>)</span><br><span class="line"><span class="comment"># 小明今年18岁</span></span><br><span class="line"><span class="comment"># print_age runed 0.00001097s</span></span><br></pre></td></tr></table></figure>
+<h2 id="需要传入参数的装饰器"><a class="markdownIt-Anchor" href="#需要传入参数的装饰器"></a> 需要传入参数的装饰器</h2>
+<p>假如我们所定义的装饰器需要传入参数，该怎么办呢？</p>
+<p>答案是在装饰器函数增加返回函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 定义一个装饰器，在函数执行前打印日志</span></span><br><span class="line"><span class="keyword">import</span> functools</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">log</span>(<span class="params">text</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line"><span class="meta">        @functools.wraps(<span class="params">func</span>)</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args,**kwargs</span>):</span></span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;text&#125;</span><span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span> func(*args, **kwargs)</span><br><span class="line">        <span class="keyword">return</span> wrapper</span><br><span class="line">    <span class="keyword">return</span> decorator</span><br><span class="line"></span><br><span class="line"><span class="meta">@log(<span class="params"><span class="string">&#x27;执行函数 &#x27;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">print_age</span>(<span class="params">name,age</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;name&#125;</span>今年<span class="subst">&#123;age&#125;</span>岁&#x27;</span>)</span><br><span class="line"></span><br><span class="line">print_age(<span class="string">&quot;wang&quot;</span>,<span class="number">23</span>)</span><br><span class="line"><span class="comment"># 执行函数 print_age</span></span><br><span class="line"><span class="comment"># wang今年23岁</span></span><br></pre></td></tr></table></figure>
+<p>@语法糖等同于以下三句</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">deco = log(<span class="string">&quot;执行函数 &quot;</span>)</span><br><span class="line">f = deco(print_age)</span><br><span class="line">f(<span class="string">&#x27;wang&#x27;</span>,<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+<p>而<code>@functools.wraps(func)</code>效果等同于<code>wrapper.__name__ = func.__name__</code>，防止有些依赖函数签名的代码执行就会出错。</p>
+<h2 id="可选参数的装饰器"><a class="markdownIt-Anchor" href="#可选参数的装饰器"></a> 可选参数的装饰器</h2>
+<p>如何定义一个装饰器，使其参数可选</p>
+<p>如：</p>
+<ul>
+<li>@log</li>
+<li>@log(‘exe’)</li>
+</ul>
+<p>仍以上面打印日志的装饰器为例</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">log</span>(<span class="params">text</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">decorator</span>(<span class="params">func</span>):</span></span><br><span class="line"><span class="meta">        @functools.wraps(<span class="params">func</span>)</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args, **kwargs</span>):</span></span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">type</span>(text) <span class="keyword">is</span> <span class="built_in">str</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;<span class="subst">&#123;text&#125;</span> <span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&#x27;执行了 <span class="subst">&#123;func.__name__&#125;</span>&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span> func(*args,**kwargs)</span><br><span class="line">        <span class="keyword">return</span> wrapper</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">type</span>(text) <span class="keyword">is</span> <span class="built_in">str</span>:   <span class="comment"># 常规的带参数</span></span><br><span class="line">        <span class="keyword">return</span> decorator</span><br><span class="line">    <span class="keyword">else</span>:   <span class="comment"># 不带参数</span></span><br><span class="line">        <span class="keyword">return</span> decorator(text)  <span class="comment">#此处text形参实际上是传入func</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@log(<span class="params"><span class="string">&#x27;exe&#x27;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">say_hello</span>(<span class="params">word</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;hello <span class="subst">&#123;word&#125;</span>!&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@log</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">say_hi</span>(<span class="params">word</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;hi <span class="subst">&#123;word&#125;</span>!&#x27;</span>)</span><br><span class="line"></span><br><span class="line">say_hello(<span class="string">&quot;wang&quot;</span>)</span><br><span class="line">say_hi(<span class="string">&quot;小明&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># exe say_hello</span></span><br><span class="line"><span class="comment"># hello wang!</span></span><br><span class="line"><span class="comment"># 执行了 say_hi</span></span><br><span class="line"><span class="comment"># hi 小明!</span></span><br></pre></td></tr></table></figure>
+<p>@语法糖等同于</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">log(<span class="string">&#x27;exe&#x27;</span>)(say_hello)(<span class="string">&quot;wang&quot;</span>)</span><br><span class="line">log(say_hi)(<span class="string">&quot;小明&quot;</span>)  <span class="comment"># 注意这里的log中的形参text实际上是传入了func</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考：</p>
+<p>《流畅的Python》</p>
+<p><a class="link"   target="_blank" rel="noopener" href="https://www.liujiangblog.com/course/python/32" >刘江的博客<i class="fas fa-external-link-alt"></i></a></p>
+<p><a class="link"   target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/1016959663602400/1017451662295584" >廖雪峰的博客<i class="fas fa-external-link-alt"></i></a></p>
+</blockquote>
+
+            </div>
+
+            
+
+            
+                <ul class="post-tags-box">
+                    
+                        <li class="tag-item">
+                            <a href="/tags/%E9%97%AD%E5%8C%85/">#闭包</a>&nbsp;
+                        </li>
+                    
+                        <li class="tag-item">
+                            <a href="/tags/%E8%A3%85%E9%A5%B0%E5%99%A8/">#装饰器</a>&nbsp;
+                        </li>
+                    
+                </ul>
+            
+
+            
+                <div class="article-nav">
+                    
+                        <div class="article-prev">
+                            <a class="prev"
+                               rel="prev"
+                               href="/2023/02/17/Python%E8%BF%9B%E9%98%B6%E4%B9%8Bpillow%E6%A8%A1%E5%9D%97%E7%BB%98%E5%88%B6%E9%AA%8C%E8%AF%81%E7%A0%81/"
+                            >
+                            <span class="left arrow-icon flex-center">
+                              <i class="fas fa-chevron-left"></i>
+                            </span>
+                                <span class="title flex-center">
+                                <span class="post-nav-title-item">Python进阶之pillow模块绘制验证码</span>
+                                <span class="post-nav-item">上一篇</span>
+                            </span>
+                            </a>
+                        </div>
+                    
+                    
+                </div>
+            
+
+            
+                <div class="comment-container">
+                    
+<div class="comments-container">
+    <div id="comments-anchor"></div>
+    <div class="comment-area-title">
+        <i class="fas fa-comments"></i>&nbsp;评论
+    </div>
+    
+        
+            
+
+    <div class="waline-comment-container">
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.css"/>
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline-meta.css"/>
+        <script data-pjax src="//cdn.jsdelivr.net/npm/@waline/client@v2/dist/waline.js"></script>
+        <div id="waline-comment"></div>
+        <script data-pjax>
+          function loadWaline() {
+            Waline.init({
+              el: '#waline-comment',
+              serverURL: 'https://blog-comments-f2bthmc6q-beyond24.vercel.app/',
+              lang: 'zh-CN' || 'zh-CN',
+              comment: '.post-comments-count',
+              reaction: 'true' === 'true'
+            })
+          }
+
+          if ('true' === 'true') {
+            setTimeout(() => {
+              loadWaline()
+            }, 1000)
+          } else {
+            window.addEventListener('DOMContentLoaded', loadWaline)
+          }
+        </script>
+    </div>
+
+
+
+        
+    
+</div>
+
+                </div>
+            
+        </div>
+
+        
+            <div class="toc-content-container">
+                <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%94%E5%9B%9E%E5%87%BD%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text"> 返回函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="nav-number">2.</span> <span class="nav-text"> 变量作用域</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AD%E5%8C%85"><span class="nav-number">3.</span> <span class="nav-text"> 闭包</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#nonlocal"><span class="nav-number">4.</span> <span class="nav-text"> nonlocal</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A3%85%E9%A5%B0%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text"> 装饰器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9C%80%E8%A6%81%E4%BC%A0%E5%85%A5%E5%8F%82%E6%95%B0%E7%9A%84%E8%A3%85%E9%A5%B0%E5%99%A8"><span class="nav-number">5.1.</span> <span class="nav-text"> 需要传入参数的装饰器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E9%80%89%E5%8F%82%E6%95%B0%E7%9A%84%E8%A3%85%E9%A5%B0%E5%99%A8"><span class="nav-number">5.2.</span> <span class="nav-text"> 可选参数的装饰器</span></a></li></ol></li></ol>
+    </div>
+</div>
+
+            </div>
+        
+    </div>
+</div>
+
+
+                
+            </div>
+
+        </div>
+
+        <div class="page-main-content-bottom">
+            
+<footer class="footer">
+    <div class="info-container">
+        <div class="copyright-info info-item">
+            &copy;
+            
+                <span>2020</span> -
+            
+            2024
+            
+                &nbsp;<i class="fas fa-heart icon-animate"></i>
+                &nbsp;<a href="/">Walter</a>
+            
+        </div>
+        
+            <script async data-pjax
+                    src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <div class="website-count info-item">
+                
+                    访问人数&nbsp;<span id="busuanzi_value_site_uv"></span>&ensp;
+                
+                
+                    总访问量&nbsp;<span id="busuanzi_value_site_pv"></span>
+                
+            </div>
+        
+        <div class="theme-info info-item">
+            由 <a target="_blank" href="https://hexo.io">Hexo</a> 驱动&nbsp;|&nbsp;主题&nbsp;<a class="theme-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep v3.6.1</a>
+        </div>
+        
+        
+            <div class="deploy-info info-item">
+                
+                    本站由 <span class="tooltip" data-content="GitHub Pages"><img src="/images/deploy-provider/github.png"></span> 提供部署服务
+                
+            </div>
+        
+    </div>
+</footer>
+
+        </div>
+    </div>
+
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item flex-center toggle-show-toc">
+                <i class="fas fa-list"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+            <li class="tools-item flex-center go-to-comments">
+                <i class="fas fa-comment"></i>
+                <span class="post-comments-count"></span>
+            </li>
+        
+    </ul>
+</div>
+
+        </div>
+    
+
+    <div class="right-bottom-side-tools">
+        <div class="side-tools-container">
+    <ul class="side-tools-list">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <li class="tools-item tool-dark-light-toggle flex-center">
+            <i class="fas fa-moon"></i>
+        </li>
+
+        <!-- rss -->
+        
+
+        
+            <li class="tools-item tool-scroll-to-top flex-center">
+                <i class="fas fa-arrow-up"></i>
+            </li>
+        
+
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list">
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+        
+    </ul>
+</div>
+
+    </div>
+
+    <div class="zoom-in-image-mask">
+    <img class="zoom-in-image">
+</div>
+
+
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fas fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="close-popup-btn">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+</main>
+
+
+
+<script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/utils.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/main.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/header-shrink.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/back2top.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/dark-light-toggle.js"></script>
+
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/local-search.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/code-block.js"></script>
+
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/lazyload.js"></script>
+
+
+<div class="post-scripts pjax">
+    
+        <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/post-helper.js"></script>
+        
+            <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/libs/anime.min.js"></script>
+        
+        
+            <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/toc.js"></script>
+        
+    
+</div>
+
+
+    <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.6.1/source/js/libs/pjax.min.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        window.pjax = new Pjax({
+            selectors: [
+                'head title',
+                '.page-container',
+                '.pjax'
+            ],
+            history: true,
+            debug: false,
+            cacheBust: false,
+            timeout: 0,
+            analytics: false,
+            currentUrlFullReload: false,
+            scrollRestoration: false,
+            // scrollTo: true,
+        });
+
+        document.addEventListener('pjax:send', () => {
+            KEEP.utils.pjaxProgressBarStart();
+        });
+
+        document.addEventListener('pjax:complete', () => {
+            KEEP.utils.pjaxProgressBarEnd();
+            window.pjax.executeScripts(document.querySelectorAll('script[data-pjax], .pjax script'));
+            KEEP.refresh();
+        });
+    });
+</script>
+
+
+
+</body>
+</html>
